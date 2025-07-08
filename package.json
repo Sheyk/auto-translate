@@ -7,7 +7,9 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "translation",
@@ -15,21 +17,22 @@
     "i18n",
     "localization"
   ],
-  "author": "Your Name",
+  "author": "Sheyk",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/auto-translate.git"
+    "url": "git+https://github.com/Sheyk/auto-translate.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/auto-translate/issues"
+    "url": "https://github.com/Sheyk/auto-translate/issues"
   },
-  "homepage": "https://github.com/yourusername/auto-translate#readme",
+  "homepage": "https://github.com/Sheyk/auto-translate#readme",
   "files": [
     "dist",
     "README.md"
   ],
   "devDependencies": {
+    "prettier": "^3.6.2",
     "typescript": "^5.0.0"
   }
-} 
+}
