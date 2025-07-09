@@ -1,12 +1,9 @@
-import { LlmConfiguration } from './modelConfiguration'
-import { isLeft, Prettify } from './utils'
+import { isLeft } from './utils'
 import { Translations, Language, readAllTranslations, writeLanguageFiles, writeLanguageFile } from './translationsReader'
 import { addMissingTranslations } from './translationsParser'
 import { prompt } from './openaiClient'
 import { read } from './codebaseReader'
-
-
-export type Settings = Prettify<{ default: string, supported: string[] } & LlmConfiguration>
+import { Settings, loadSettings } from './settingsReader'
 
 export const parseCodeBaseTranslations = async (settings: Settings) => {
   const readResult = await read(settings.default)
@@ -28,7 +25,6 @@ export const parseCodeBaseTranslations = async (settings: Settings) => {
   console.log(`📍 Translation file location: ./i18n/${settings.default}.json`)
 }
 
-
 const translate = async (settings: Settings) => {
   await addMissingTranslations(settings.default, {
     reader: () => Promise.resolve(readAllTranslations(settings.supported)),
@@ -38,14 +34,17 @@ const translate = async (settings: Settings) => {
 }
 
 export const run = async () => {
-  const settings : Settings = {
-    default: 'en',
-    supported: ['en', 'fr', 'de'],
-    openai: {
-      model: 'gpt-4o-mini',
-      apiKey: process.env.OPENAI_API_KEY || ''
-    }
+  const settingsResult = loadSettings()
+  
+  if (isLeft(settingsResult)) {
+    console.error('❌ Failed to load settings:', settingsResult.value.message)
+    throw settingsResult.value
   }
+  
+  const settings = settingsResult.value
+  
+  console.log(`🌍 Auto-translating from ${settings.default} to: ${settings.supported.filter(lang => lang !== settings.default).join(', ')}`)
+  
   await parseCodeBaseTranslations(settings)
   await translate(settings)
 }

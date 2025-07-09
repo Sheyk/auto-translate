@@ -11,6 +11,7 @@ const mockedPrompt = openaiClient.prompt as jest.MockedFunction<typeof openaiCli
 
 // Import after mocking
 import { run } from '../index'
+import { Settings } from '../settingsReader'
 
 // Mock console methods
 const originalConsoleLog = console.log
@@ -35,6 +36,7 @@ afterEach(() => {
 describe('Auto-Translate Integration Test', () => {
   const testProjectDir = path.join(__dirname, 'mock-react-project')
   const i18nDir = path.join(testProjectDir, 'i18n')
+  const settingsFile = 'auto-translate.settings.json'
   
   beforeEach(() => {
     // Clean up any existing test directory
@@ -59,6 +61,17 @@ describe('Auto-Translate Integration Test', () => {
     const currentI18nDir = path.join(process.cwd(), 'i18n')
     if (fs.existsSync(currentI18nDir)) {
       fs.rmSync(currentI18nDir, { recursive: true })
+    }
+    
+    // Clean up settings files
+    const currentSettingsFile = path.join(process.cwd(), settingsFile)
+    if (fs.existsSync(currentSettingsFile)) {
+      fs.rmSync(currentSettingsFile)
+    }
+    
+    const testSettingsFile = path.join(testProjectDir, settingsFile)
+    if (fs.existsSync(testSettingsFile)) {
+      fs.rmSync(testSettingsFile)
     }
   })
 
@@ -368,6 +381,23 @@ export default App`
         'Email is required': 'E-Mail ist erforderlich',
         'Password is required': 'Passwort ist erforderlich',
         'Name is required': 'Name ist erforderlich'
+      },
+      'pt': {
+        'My Awesome App': 'Meu App Incrível',
+        'Home': 'Início',
+        'About': 'Sobre',
+        'Contact': 'Contato',
+        'Sign Out': 'Sair',
+        'Sign In': 'Entrar',
+        'All rights reserved': 'Todos os direitos reservados',
+        'Privacy Policy': 'Política de Privacidade',
+        'Terms of Service': 'Termos de Serviço',
+        'Loading...': 'Carregando...',
+        'Welcome to our website': 'Bem-vindo ao nosso site',
+        'Get Started': 'Começar',
+        'Email is required': 'E-mail é obrigatório',
+        'Password is required': 'Senha é obrigatória',
+        'Name is required': 'Nome é obrigatório'
       }
     }
 
@@ -392,6 +422,20 @@ export default App`
 
       // Run the auto-translate workflow
       await run()
+
+      // Verify settings file was created
+      const settingsFilePath = path.join(testProjectDir, settingsFile)
+      expect(fs.existsSync(settingsFilePath)).toBe(true)
+      
+      const settings = JSON.parse(fs.readFileSync(settingsFilePath, 'utf-8'))
+      expect(settings).toEqual({
+        default: 'en',
+        supported: ['en', 'fr', 'de'],
+        openai: {
+          model: 'gpt-4o-mini',
+          apiKey: ''  // Should be empty in file for security
+        }
+      })
 
       // Verify English translations file was created
       const enFile = path.join(i18nDir, 'en.json')
@@ -435,6 +479,15 @@ export default App`
       expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('Successfully updated en.json')
       )
+      
+      // Verify settings-related messages were logged
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Created auto-translate.settings.json with default settings')
+      )
+      
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Auto-translating from en to: fr, de')
+      )
 
     } finally {
       // Restore original state
@@ -443,6 +496,60 @@ export default App`
       delete process.env.CURRENT_LANG
     }
   }, 30000) // 30 second timeout for integration test
+
+  it('should use existing settings file when available', async () => {
+    const originalCwd = process.cwd()
+    const originalEnv = process.env.OPENAI_API_KEY
+    
+    // Set a mock API key
+    process.env.OPENAI_API_KEY = 'mock-api-key'
+    
+    try {
+      process.chdir(testProjectDir)
+      
+      // Create a custom settings file
+      const customSettings = {
+        default: 'es',
+        supported: ['es', 'pt'],
+        openai: {
+          model: 'gpt-3.5-turbo',
+          apiKey: 'custom-key-from-file'
+        }
+      }
+      
+      const settingsFilePath = path.join(testProjectDir, settingsFile)
+      fs.writeFileSync(settingsFilePath, JSON.stringify(customSettings, null, 2))
+      
+      // Run the auto-translate workflow
+      await run()
+      
+      // Verify the existing settings file was used (not overwritten)
+      const savedSettings = JSON.parse(fs.readFileSync(settingsFilePath, 'utf-8'))
+      expect(savedSettings).toEqual(customSettings)
+      
+      // Verify Spanish (es) file was created as the default language
+      const esFile = path.join(i18nDir, 'es.json')
+      expect(fs.existsSync(esFile)).toBe(true)
+      
+      // Verify Portuguese (pt) file was created
+      const ptFile = path.join(i18nDir, 'pt.json')
+      expect(fs.existsSync(ptFile)).toBe(true)
+      
+      // Verify settings loading message was logged
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Loaded settings from auto-translate.settings.json')
+      )
+      
+      // Verify the custom languages were used
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Auto-translating from es to: pt')
+      )
+      
+    } finally {
+      process.chdir(originalCwd)
+      process.env.OPENAI_API_KEY = originalEnv
+    }
+  }, 15000)
 
   it('should handle missing OpenAI API key gracefully', async () => {
     const originalCwd = process.cwd()
