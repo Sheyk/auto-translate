@@ -70,10 +70,11 @@ export function lift<TIn, TError, TOut>(fn: (value: TIn) => Either<TError, TOut>
   };
 }
 
-// Async version for Promise<Either>
 type AsyncMonad<TIn, TError, TOut> = {
   flatMap: <TOutNext>(fn: (value: TOut) => Promise<Either<TError, TOutNext>>) => AsyncMonad<TIn, TError, TOutNext>,
+  flatMapAll: <TOutNext>(fn: (value: TOut) => Promise<Either<TError, TOutNext>>[]) => AsyncMonad<TIn, TError, TOutNext[]>,
   flatMapVoid: (fn: (value: TOut) => Promise<Either<TError, void>>) => AsyncMonad<TIn, TError, TOut>,
+  flatMapAllVoid: (fn: (value: TOut) => Promise<Either<TError, void>>[]) => AsyncMonad<TIn, TError, TOut>,
   map: <TOutNext>(fn: (value: TOut) => TOutNext) => AsyncMonad<TIn, TError, TOutNext>,
   mapError: <TErrorNext>(fn: (error: TError) => TErrorNext) => AsyncMonad<TIn, TErrorNext, TOut>,
   result: (value?: TIn) => Promise<Either<TError, TOut>>
@@ -88,12 +89,34 @@ export function liftAsync<TIn, TError, TOut>(fn: (value: TIn) => Promise<Either<
         return await fn2(result.value);
       });
     },
+    flatMapAll: <TOutNext>(fn2: (value: TOut) => Promise<Either<TError, TOutNext>>[]) => {
+      return liftAsync(async (value: TIn): Promise<Either<TError, TOutNext[]>> => {
+        const result = await fn(value);
+        if (isLeft(result)) return left(result.value);
+        const promises = fn2(result.value);
+        const results = await Promise.all(promises);
+        const leftResult = results.find(isLeft);
+        if (leftResult) return left(leftResult.value);
+        return right(results.map(r => (r as { type: 'right', value: TOutNext }).value));
+      });
+    },
     flatMapVoid: (fn2: (value: TOut) => Promise<Either<TError, void>>) => {
       return liftAsync(async (value: TIn) => {
         const result = await fn(value);
         if (isLeft(result)) return result as Either<TError, TOut>;
         const voidResult = await fn2(result.value);
         if (isLeft(voidResult)) return voidResult as Either<TError, TOut>;
+        return right(result.value); // Pass through the original value
+      });
+    },
+    flatMapAllVoid: (fn2) => {
+      return liftAsync(async (value: TIn) => {
+        const result = await fn(value);
+        if (isLeft(result)) return left(result.value);
+        const promises = fn2(result.value);
+        const results = await Promise.all(promises);
+        const leftResult = results.find(isLeft);
+        if (leftResult) return left(leftResult.value);
         return right(result.value); // Pass through the original value
       });
     },
