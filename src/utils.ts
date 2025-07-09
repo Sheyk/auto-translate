@@ -22,25 +22,40 @@ export function isRight<L, R>(either: Either<L, R>): either is { type: 'right'; 
 
 type Chainable<TIn, TError, TOut> = {
   andThen: <TOutNext>(fn: (value: TOut) => Either<TError, TOutNext>) => Chainable<TIn, TError, TOutNext>,
+  map: <TOutNext>(fn: (value: TOut) => TOutNext) => Chainable<TIn, TError, TOutNext>,
+  mapError: <TErrorNext>(fn: (error: TError) => TErrorNext) => Chainable<TIn, TErrorNext, TOut>,
   result: (value: TIn) => Either<TError, TOut>
 }
 
-export function chain<TIn, TError, TOut>(fn: (value: TIn) => Either<TError, TOut>) : Chainable<TIn, TError, TOut> {
+export function chain<TIn, TError, TOut>(fn: (value: TIn) => Either<TError, TOut>): Chainable<TIn, TError, TOut> {
   return {
     andThen: <TOutNext>(fn2: (value: TOut) => Either<TError, TOutNext>) => {
       return chain((value: TIn) => {
-        const result = fn(value)
-        if(isLeft(result)) return result as Either<TError, TOutNext>
-        return fn2(result.value)
-      })
+        const result = fn(value);
+        if (isLeft(result)) return result as Either<TError, TOutNext>;
+        return fn2(result.value);
+      });
+    },
+    map: <TOutNext>(fn2: (value: TOut) => TOutNext) => {
+      return chain((value: TIn) => {
+        const result = fn(value);
+        if (isLeft(result)) return result as Either<TError, TOutNext>;
+        return right(fn2(result.value));
+      });
+    },
+    mapError: <TErrorNext>(fn2: (error: TError) => TErrorNext) => {
+      return chain((value: TIn) => {
+        const result = fn(value);
+        if (isLeft(result)) return left(fn2(result.value));
+        return result as Either<TErrorNext, TOut>;
+      });
     },
     result: (value: TIn) => {
-      try{
-        return fn(value)
-      }
-      catch(error) {
-        return left(error as TError)
+      try {
+        return fn(value);
+      } catch (error) {
+        return left(error as TError);
       }
     }
-  }
+  };
 }
