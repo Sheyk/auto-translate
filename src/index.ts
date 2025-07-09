@@ -1,8 +1,8 @@
-import { prompt } from './openaiClient'
-import { createTranslator } from './translate'
 import { LlmConfiguration } from './modelConfiguration'
 import { Prettify } from './utils'
-import { TranslationsReader, Translations } from './translationsReader'
+import { TranslationsReader, Translations, Language } from './translationsReader'
+import { addMissingTranslations } from './translationsParser'
+import { prompt } from './openaiClient'
 
 export const t = (key: string) => {
   return key;
@@ -12,24 +12,12 @@ export type Settings = Prettify<{ default: string, supported: string[] } & LlmCo
 
 export const load = async (settings: Settings) => {
   const translationsReader = new TranslationsReader(process.cwd(), settings?.supported)
-  const translations: Record<string, Translations> = translationsReader.readAllTranslations()
 
-  const defaultTranslations = translations[settings.default]
-  const defaultKeys = Object.keys(defaultTranslations)
-
-  for (const language of settings.supported.filter(language => language !== settings.default)) {
-    const missingTranslations = defaultKeys.filter(key => !translations[language][key])
-    if(!missingTranslations.length) continue
-
-    var translate = createTranslator(settings.default, language, (text) => prompt(text, settings.openai.model, settings.openai.apiKey))
-
-    for (const key of missingTranslations) {
-      const translation = await translate(defaultTranslations[key])
-      translations[language][key] = translation
-    }
-
-    translationsReader.writeLanguageFile(language, translations[language])
-  }
+  await addMissingTranslations(settings.default, {
+    reader: () => Promise.resolve(translationsReader.readAllTranslations()),
+    writer: (translations: Record<Language, Translations>) => translationsReader.writeLanguageFiles(translations, { append: true}),
+    translator: (text: string) => prompt(text, settings.openai.model, settings.openai.apiKey)
+  })
 }
 
 export const setLanguage = (language: string) => {}
