@@ -21,7 +21,7 @@ export const readTranslations = async (reader: () => Promise<Either<Error, Recor
 
 export const getMissingTranslations = (defaultTranslations: Translations, targetTranslations: Translations) : Translations => {
      const missingTranslationKeys = Object.keys(defaultTranslations).filter(key => !targetTranslations[key])
-     console.log(`🔍 Found ${missingTranslationKeys.length} missing translation keys`);
+ 
      return missingTranslationKeys.reduce((acc, key) => {
           acc[key] = defaultTranslations[key]
           return acc
@@ -37,14 +37,19 @@ export const extractDefaultAndOthers = (defaultLanguage: Language, translations:
 
 export const extractMissingTranslations = (translations: { default: TranslationWithLanguageCode, others: TranslationWithLanguageCode[] }) : TranslationWithLanguageCode[] => {
      console.log(`🎯 Extracting missing translations for ${translations.others.length} target languages`);
-     return translations.others.map(other => {
+     var missingTranslations = translations.others.map(other => {
           const missing = getMissingTranslations(translations.default.translations, other.translations);
-          console.log(`📝 Language '${other.language}': ${Object.keys(missing).length} missing translations`);
+          const missingCount = Object.keys(missing).length;
+          if (missingCount > 0) {
+               console.log(`📝 Language '${other.language}': ${missingCount} missing translations`);
+          }
           return {
                language: other.language as Language,
                translations: missing
           };
      })
+     console.log(`🔍 Found ${missingTranslations.flatMap(x => Object.keys(x.translations)).length} missing translation keys`);
+     return missingTranslations
 }
 
 export const addTranslator = (defaultLanguage: Language, translator: (text: string) => Promise<string>) => 
@@ -56,6 +61,9 @@ export const addTranslator = (defaultLanguage: Language, translator: (text: stri
 export const translate = (translation: TranslationWithTranslator) : Promise<Either<Error, TranslationWithLanguageCode>> => {
      const { translations, translate } = translation
      const totalKeys = Object.keys(translations).length;
+     if (totalKeys === 0) {
+          return Promise.resolve(right({ language: translation.language, translations: {} }))
+     }
      console.log(`🌐 Starting translation for '${translation.language}' (${totalKeys} keys)`);
 
      return new Promise(async (resolve, reject) => {
@@ -83,6 +91,13 @@ export const addMissingTranslations = async (defaultLanguage: Language, dependen
      const result = await liftAsync(() => readTranslations(dependencies.reader))
           .map(translations => extractDefaultAndOthers(defaultLanguage, translations))
           .map(extractMissingTranslations)
+          .map(missingTranslations => {
+               if (missingTranslations.every(t => Object.keys(t.translations).length === 0)) {
+                    console.log('✅ All translations are up to date!');
+                    return []
+               }
+               return missingTranslations
+          })
           .map(missingTranslations => missingTranslations.map(addTranslator(defaultLanguage, dependencies.translator)))
           .flatMapAll(missingTranslationsWithTranslator => missingTranslationsWithTranslator.map(translate))
           .flatMapAllVoid(translatedTranslations => 
