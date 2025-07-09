@@ -1,4 +1,4 @@
-import { left, right, isLeft, isRight, lift, Either } from '../utils';
+import { left, right, isLeft, isRight, lift, liftAsync, Either } from '../utils';
 
 describe('Either utilities', () => {
   describe('left and right constructors', () => {
@@ -179,3 +179,33 @@ describe('chain function', () => {
     }
   });
 }); 
+
+it('should handle Promises', async () => {
+  const readFile = () : Promise<Either<string, string>> => Promise.resolve(right('file content'));
+  const uppercase = (str: string) => str.toUpperCase();
+
+  const result = await liftAsync(readFile)
+    .map(uppercase)
+    .result();
+
+  expect(isRight(result)).toBe(true);
+  if (isRight(result)) {
+    expect(result.value).toBe('FILE CONTENT');
+  }
+});
+
+it('should handle functions that do nothing', async () => {
+  const readFile = () : Promise<Either<string, string>> => Promise.resolve(right('file content'));
+  const uppercase = (str: string) => str.toUpperCase();
+  const writeFile = (str: string) : Promise<Either<string, void>> => Promise.resolve(right(undefined));
+
+  const result = await liftAsync(readFile)
+    .map(uppercase)
+    .flatMapVoid(writeFile)
+    .result();
+
+  expect(isRight(result)).toBe(true);
+  if (isRight(result)) {
+    expect(result.value).toBe('FILE CONTENT');
+  }
+});
