@@ -2,7 +2,7 @@ import { prompt } from './openaiClient'
 import { createTranslator } from './translate'
 import { LlmConfiguration } from './modelConfiguration'
 import { Prettify } from './utils'
-import { TranslationsReader, TranslationData } from './translationsReader'
+import { TranslationsReader, Translations } from './translationsReader'
 
 export const t = (key: string) => {
   return key;
@@ -12,7 +12,7 @@ export type Settings = Prettify<{ default: string, supported: string[] } & LlmCo
 
 export const load = async (settings: Settings) => {
   const translationsReader = new TranslationsReader(process.cwd(), settings?.supported)
-  const translations: Record<string, any> = translationsReader.readAllTranslations()
+  const translations: Record<string, Translations> = translationsReader.readAllTranslations()
 
   const defaultTranslations = translations[settings.default]
   const defaultKeys = Object.keys(defaultTranslations)

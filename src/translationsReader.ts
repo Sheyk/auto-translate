@@ -1,15 +1,20 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-export interface TranslationData {
-  [key: string]: string | TranslationData;
+export type Translations = {
+  [key: TranslationKey]: TranslationValue;
 }
 
-export class TranslationsReader {
-  private translationsPath: string;
-  private supportedLanguages: string[];
+export type Language = string
+export type TranslationKey = string
+export type TranslationValue = string
+export type TranslationsPath = string
 
-  constructor(projectRoot: string, supportedLanguages: string[] = ['en']) {
+export class TranslationsReader {
+  private translationsPath: TranslationsPath;
+  private supportedLanguages: Language[];
+
+  constructor(projectRoot: TranslationsPath, supportedLanguages: Language[] = ['en']) {
     this.translationsPath = path.join(projectRoot, 'translations');
     this.supportedLanguages = supportedLanguages;
     this.ensureTranslationsDirectory();
@@ -31,8 +36,8 @@ export class TranslationsReader {
     });
   }
 
-  public readAllTranslations(): Record<string, TranslationData> {
-    const translations: Record<string, TranslationData> = {};
+  public readAllTranslations(): Record<Language, Translations> {
+    const translations: Record<Language, Translations> = {};
 
     this.supportedLanguages.forEach(languageCode => {
       const filePath = path.join(this.translationsPath, `${languageCode}.json`);
@@ -48,7 +53,7 @@ export class TranslationsReader {
     return translations;
   }
 
-  public readLanguageFile(languageCode: string): TranslationData {
+  public readLanguageFile(languageCode: Language): Translations {
     const filePath = path.join(this.translationsPath, `${languageCode}.json`);
     
     if (!fs.existsSync(filePath)) {
@@ -66,13 +71,13 @@ export class TranslationsReader {
     }
   }
 
-  public writeLanguageFile(languageCode: string, data: TranslationData): void {
+  public writeLanguageFile(languageCode: Language, translations: Translations): void {
     const filePath = path.join(this.translationsPath, `${languageCode}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    fs.writeFileSync(filePath, JSON.stringify(translations, null, 2), 'utf8');
   }
 
-  public getAvailableLanguages(): string[] {
-    const languages: string[] = [];
+  public getAvailableLanguages(): Language[] {
+    const languages: Language[] = [];
     
     this.supportedLanguages.forEach(languageCode => {
       const filePath = path.join(this.translationsPath, `${languageCode}.json`);
@@ -84,18 +89,18 @@ export class TranslationsReader {
     return languages;
   }
 
-  public addLanguage(languageCode: string): void {
+  public addLanguage(languageCode: Language): void {
     if (!this.supportedLanguages.includes(languageCode)) {
       this.supportedLanguages.push(languageCode);
     }
     this.ensureLanguageFiles();
   }
 
-  public getTranslationsPath(): string {
+  public getTranslationsPath(): TranslationsPath {
     return this.translationsPath;
   }
 
-  public getSupportedLanguages(): string[] {
+  public getSupportedLanguages(): Language[] {
     return this.supportedLanguages;
   }
 }
