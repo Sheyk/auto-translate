@@ -66,13 +66,13 @@ describe('codebaseReader', () => {
       process.chdir(testDir)
 
       try {
-        const result = await read('en')
+        const result = await read()
 
         expect(isRight(result)).toBe(true)
         if (isRight(result)) {
           expect(result.value).toEqual({
-            'welcome-to-our-app': 'Welcome to our app',
-            'this-is-a-description': 'This is a description'
+            'Welcome to our app': 'Welcome to our app',
+            'This is a description': 'This is a description'
           })
         }
 
@@ -96,7 +96,7 @@ describe('codebaseReader', () => {
       process.chdir(testDir)
 
       try {
-        const result = await read('en')
+        const result = await read()
 
         expect(isRight(result)).toBe(true)
         if (isRight(result)) {
@@ -116,7 +116,7 @@ describe('codebaseReader', () => {
         process.chdir(nonExistentDir)
         
         // This should not throw an error but return empty translations
-        const result = await read('en')
+        const result = await read()
 
         expect(isRight(result)).toBe(true)
         if (isRight(result)) {
@@ -129,11 +129,11 @@ describe('codebaseReader', () => {
         // Create a valid test instead
         fs.writeFileSync(path.join(testDir, 'app.js'), `t('Test translation')`)
         
-        const result = await read('en')
+        const result = await read()
         expect(isRight(result)).toBe(true)
         if (isRight(result)) {
           expect(result.value).toEqual({
-            'test-translation': 'Test translation'
+            'Test translation': 'Test translation'
           })
         }
       } finally {

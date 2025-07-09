@@ -401,7 +401,7 @@ describe('translationsParser', () => {
 
       await addMissingTranslations('en', dependencies);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('💥 Translation process failed:', expect.any(Error));
       expect(mockWriter).not.toHaveBeenCalled();
       
       consoleSpy.mockRestore();
@@ -419,7 +419,7 @@ describe('translationsParser', () => {
 
       await addMissingTranslations('en', dependencies);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('💥 Translation process failed:', expect.any(Error));
       
       consoleSpy.mockRestore();
     });
@@ -436,7 +436,7 @@ describe('translationsParser', () => {
 
       await addMissingTranslations('en', dependencies);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith('💥 Translation process failed:', expect.any(Error));
       
       consoleSpy.mockRestore();
     });

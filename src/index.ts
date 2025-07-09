@@ -6,7 +6,7 @@ import { read } from './codebaseReader'
 import { Settings, loadSettings } from './settingsReader'
 
 export const parseCodeBaseTranslations = async (settings: Settings) => {
-  const readResult = await read(settings.default)
+  const readResult = await read()
   
   if (isLeft(readResult)) {
     console.error('❌ Error parsing codebase translations:', readResult.value.message)

@@ -443,23 +443,23 @@ export default App`
       
       const enTranslations = JSON.parse(fs.readFileSync(enFile, 'utf-8'))
       
-      // Verify key translations are present with correct kebab-case keys
+      // Verify key translations are present with actual text as keys
       expect(enTranslations).toEqual(expect.objectContaining({
-        'my-awesome-app': 'My Awesome App',
-        'home': 'Home',
-        'about': 'About',
-        'contact': 'Contact',
-        'sign-out': 'Sign Out',
-        'sign-in': 'Sign In',
-        'all-rights-reserved': 'All rights reserved',
-        'privacy-policy': 'Privacy Policy',
-        'terms-of-service': 'Terms of Service',
-        'loading': 'Loading...',
-        'welcome-to-our-website': 'Welcome to our website',
-        'get-started': 'Get Started',
-        'email-is-required': 'Email is required',
-        'password-is-required': 'Password is required',
-        'name-is-required': 'Name is required'
+        'My Awesome App': 'My Awesome App',
+        'Home': 'Home',
+        'About': 'About',
+        'Contact': 'Contact',
+        'Sign Out': 'Sign Out',
+        'Sign In': 'Sign In',
+        'All rights reserved': 'All rights reserved',
+        'Privacy Policy': 'Privacy Policy',
+        'Terms of Service': 'Terms of Service',
+        'Loading...': 'Loading...',
+        'Welcome to our website': 'Welcome to our website',
+        'Get Started': 'Get Started',
+        'Email is required': 'Email is required',
+        'Password is required': 'Password is required',
+        'Name is required': 'Name is required'
       }))
 
       // Verify French translations file was created

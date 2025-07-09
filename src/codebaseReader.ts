@@ -3,15 +3,6 @@ import * as path from 'path'
 import { Language, Translations } from './translationsReader'
 import { isLeft, Either, left, right } from './utils'
 
-// Helper function to convert text to kebab-case
-const toKebabCase = (text: string): string => {
-    return text
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '') // Remove special characters except hyphens and spaces
-      .replace(/\s+/g, '-')     // Replace spaces with hyphens
-      .replace(/-+/g, '-')      // Replace multiple hyphens with single hyphen
-      .replace(/^-|-$/g, '')    // Remove leading/trailing hyphens
-  }
   
   // Helper function to recursively find files with specific extensions
   const findFiles = (dir: string, extensions: string[]): string[] => {
@@ -66,7 +57,7 @@ const toKebabCase = (text: string): string => {
     return matches
   }
   
-  export const read = async (defaultLanguage: Language): Promise<Either<Error, Translations>> => {
+  export const read = async (): Promise<Either<Error, Translations>> => {
     try {
       console.log('🔍 Searching for translation calls in codebase...')
       
@@ -101,8 +92,7 @@ const toKebabCase = (text: string): string => {
       // Convert to translations object with kebab-case keys
       const translations: Translations = {}
       translationStrings.forEach(text => {
-        const key = toKebabCase(text)
-        translations[key] = text
+        translations[text] = text
       })
       
       return right(translations)
