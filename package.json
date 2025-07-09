@@ -4,6 +4,9 @@
   "description": "An automatic translation library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "auto-translate": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
