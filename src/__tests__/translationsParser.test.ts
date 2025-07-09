@@ -1,5 +1,5 @@
 import { Language, Translations } from '../translationsReader';
-import { isLeft, isRight, left, right } from '../utils';
+import { Either, isLeft, isRight, left, right } from '../utils';
 import { 
   addMissingTranslations,
   readTranslations,
@@ -19,7 +19,9 @@ describe('translationsParser', () => {
     es: { hello: 'Hola' } // missing 'world' and 'greeting'
   };
 
-  const mockReader = jest.fn(() => Promise.resolve(mockTranslations));
+  const mockReader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+    Promise.resolve(right<Error, Record<Language, Translations>>(mockTranslations))
+  );
   const mockWriter = jest.fn(() => Promise.resolve(right<Error, void>(undefined)));
   const mockTranslator = jest.fn((text: string) => Promise.resolve(`translated_${text}`));
 
@@ -29,7 +31,9 @@ describe('translationsParser', () => {
 
   describe('readTranslations', () => {
     it('should return right when reader succeeds', async () => {
-      const reader = jest.fn(() => Promise.resolve(mockTranslations));
+      const reader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+        Promise.resolve(right<Error, Record<Language, Translations>>(mockTranslations))
+      );
       
       const result = await readTranslations(reader);
       
@@ -40,8 +44,23 @@ describe('translationsParser', () => {
       expect(reader).toHaveBeenCalledTimes(1);
     });
 
-    it('should return left when reader throws error', async () => {
+    it('should return left when reader returns left', async () => {
       const error = new Error('Reader failed');
+      const reader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+        Promise.resolve(left<Error, Record<Language, Translations>>(error))
+      );
+      
+      const result = await readTranslations(reader);
+      
+      expect(isLeft(result)).toBe(true);
+      if (isLeft(result)) {
+        expect(result.value).toBe(error);
+      }
+      expect(reader).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return left when reader throws error', async () => {
+      const error = new Error('Reader threw');
       const reader = jest.fn(() => Promise.reject(error));
       
       const result = await readTranslations(reader);
@@ -369,7 +388,9 @@ describe('translationsParser', () => {
     });
 
     it('should handle reader errors', async () => {
-      const failingReader = jest.fn(() => Promise.reject(new Error('Reader failed')));
+      const failingReader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+        Promise.resolve(left<Error, Record<Language, Translations>>(new Error('Reader failed')))
+      );
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const dependencies = {
@@ -427,7 +448,9 @@ describe('translationsParser', () => {
         es: { hello: 'Hola', world: 'Mundo' }
       };
 
-      const completeReader = jest.fn(() => Promise.resolve(completeTranslations));
+      const completeReader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+        Promise.resolve(right<Error, Record<Language, Translations>>(completeTranslations))
+      );
 
       const dependencies = {
         reader: completeReader,
@@ -448,7 +471,9 @@ describe('translationsParser', () => {
         es: {}
       };
 
-      const emptyReader = jest.fn(() => Promise.resolve(emptyTranslations));
+      const emptyReader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+        Promise.resolve(right<Error, Record<Language, Translations>>(emptyTranslations))
+      );
 
       const dependencies = {
         reader: emptyReader,
@@ -469,7 +494,9 @@ describe('translationsParser', () => {
         es: { hello: 'Hola' }
       };
 
-      const missingDefaultReader = jest.fn(() => Promise.resolve(missingDefaultTranslations));
+      const missingDefaultReader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+        Promise.resolve(right<Error, Record<Language, Translations>>(missingDefaultTranslations))
+      );
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const dependencies = {
@@ -493,7 +520,9 @@ describe('translationsParser', () => {
         en: { hello: 'Hello', world: 'World' }
       };
 
-      const singleLanguageReader = jest.fn(() => Promise.resolve(singleLanguageTranslations));
+      const singleLanguageReader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+        Promise.resolve(right<Error, Record<Language, Translations>>(singleLanguageTranslations))
+      );
 
       const dependencies = {
         reader: singleLanguageReader,
@@ -514,7 +543,9 @@ describe('translationsParser', () => {
         fr: {} // missing both
       };
 
-      const unicodeReader = jest.fn(() => Promise.resolve(unicodeTranslations));
+      const unicodeReader = jest.fn((): Promise<Either<Error, Record<Language, Translations>>> => 
+        Promise.resolve(right<Error, Record<Language, Translations>>(unicodeTranslations))
+      );
 
       const dependencies = {
         reader: unicodeReader,

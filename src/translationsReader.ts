@@ -1,106 +1,100 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { Either, left, right, isLeft } from './utils';
 
-export type Translations = {
-  [key: TranslationKey]: TranslationValue;
-}
+export type Language = string;
+export type Translations = Record<string, string>;
 
-export type Language = string
-export type TranslationKey = string
-export type TranslationValue = string
-export type TranslationsPath = string
+const i18nFolder = 'i18n';
 
-export class TranslationsReader {
-  private translationsPath: TranslationsPath;
-  private supportedLanguages: Language[];
+const getTranslationFilePath = (language: Language): string => {
+  return path.join(process.cwd(), i18nFolder, `${language}.json`);
+};
 
-  constructor(projectRoot: TranslationsPath, supportedLanguages: Language[] = ['en']) {
-    this.translationsPath = path.join(projectRoot, 'translations');
-    this.supportedLanguages = supportedLanguages;
-    this.ensureTranslationsDirectory();
-    this.ensureLanguageFiles();
-  }
-
-  private ensureTranslationsDirectory(): void {
-    if (!fs.existsSync(this.translationsPath)) {
-      fs.mkdirSync(this.translationsPath, { recursive: true });
-    }
-  }
-
-  private ensureLanguageFiles(): void {
-    this.supportedLanguages.forEach(languageCode => {
-      const filePath = path.join(this.translationsPath, `${languageCode}.json`);
-      if (!fs.existsSync(filePath)) {
-        fs.writeFileSync(filePath, '{}', 'utf8');
-      }
-    });
-  }
-
-  public readAllTranslations(): Record<Language, Translations> {
-    const translations: Record<Language, Translations> = {};
-
-    this.supportedLanguages.forEach(languageCode => {
-      const filePath = path.join(this.translationsPath, `${languageCode}.json`);
-      try {
-        const content = fs.readFileSync(filePath, 'utf8');
-        translations[languageCode] = JSON.parse(content);
-      } catch (error) {
-        console.warn(`Warning: Could not read ${languageCode}.json, using empty object`);
-        translations[languageCode] = {};
-      }
-    });
-
-    return translations;
-  }
-
-  public readLanguageFile(languageCode: Language): Translations {
-    const filePath = path.join(this.translationsPath, `${languageCode}.json`);
-    
+const readTranslationFile = (filePath: string): Either<Error, Translations> => {
+  try {
     if (!fs.existsSync(filePath)) {
-      // Create the file if it doesn't exist
-      fs.writeFileSync(filePath, '{}', 'utf8');
-      return {};
+      return right({});
     }
-
-    try {
-      const content = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(content);
-    } catch (error) {
-      console.warn(`Warning: Could not parse ${languageCode}.json, using empty object`);
-      return {};
-    }
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const parsed = JSON.parse(fileContent);
+    return right(parsed);
+  } catch (error) {
+    return left(error as Error);
   }
+};
 
-  public writeLanguageFile(languageCode: Language, translations: Translations): void {
-    const filePath = path.join(this.translationsPath, `${languageCode}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(translations, null, 2), 'utf8');
-  }
-
-  public getAvailableLanguages(): Language[] {
-    const languages: Language[] = [];
+export const readAllTranslations = (supportedLanguages: Language[]): Either<Error, Record<Language, Translations>> => {
+  try {
+    const translations: Record<Language, Translations> = {};
     
-    this.supportedLanguages.forEach(languageCode => {
-      const filePath = path.join(this.translationsPath, `${languageCode}.json`);
-      if (fs.existsSync(filePath)) {
-        languages.push(languageCode);
+    for (const lang of supportedLanguages) {
+      const filePath = getTranslationFilePath(lang);
+      const result = readTranslationFile(filePath);
+      
+      if (isLeft(result)) {
+        // If we can't read a translation file, log a warning but continue with empty translations
+        console.warn(`Warning: Could not read translation file for language '${lang}': ${result.value.message}`);
+        translations[lang] = {};
+      } else {
+        translations[lang] = result.value;
       }
-    });
-
-    return languages;
-  }
-
-  public addLanguage(languageCode: Language): void {
-    if (!this.supportedLanguages.includes(languageCode)) {
-      this.supportedLanguages.push(languageCode);
     }
-    this.ensureLanguageFiles();
+    
+    return right(translations);
+  } catch (error) {
+    return left(error as Error);
   }
+};
 
-  public getTranslationsPath(): TranslationsPath {
-    return this.translationsPath;
-  }
+export const writeLanguageFile = (
+  language: Language,
+  translations: Translations,
+  options: { append: boolean } = { append: false }
+): Either<Error, void> => {
+  try {
+    const filePath = getTranslationFilePath(language);
+    const i18nDir = path.dirname(filePath);
 
-  public getSupportedLanguages(): Language[] {
-    return this.supportedLanguages;
+    // Ensure directory exists
+    if (!fs.existsSync(i18nDir)) {
+      fs.mkdirSync(i18nDir, { recursive: true });
+    }
+
+    let existingTranslations: Translations = {};
+    
+    // If appending, try to read existing translations
+    if (options.append && fs.existsSync(filePath)) {
+      const readResult = readTranslationFile(filePath);
+      if (isLeft(readResult)) {
+        return left(new Error(`Failed to read existing translation file for '${language}': ${readResult.value.message}`));
+      }
+      existingTranslations = readResult.value;
+    }
+
+    const newTranslations = { ...existingTranslations, ...translations };
+    const fileContent = JSON.stringify(newTranslations, null, 2);
+    fs.writeFileSync(filePath, fileContent, 'utf-8');
+
+    return right(undefined);
+  } catch (error) {
+    return left(error as Error);
   }
-}
+};
+
+export const writeLanguageFiles = async (
+  translations: Record<Language, Translations>,
+  options: { append: boolean }
+): Promise<Either<Error, void>> => {
+  try {
+    for (const lang of Object.keys(translations)) {
+      const result = writeLanguageFile(lang, translations[lang], options);
+      if (isLeft(result)) {
+        return result;
+      }
+    }
+    return right(undefined);
+  } catch (error) {
+    return left(error as Error);
+  }
+};

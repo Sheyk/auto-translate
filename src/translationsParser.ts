@@ -1,11 +1,10 @@
 import { Language, Translations } from './translationsReader';
-import { createTranslator } from './translate';
+import { createTranslator } from './createTranslator';
 import { Either, isLeft, left, liftAsync, right } from './utils';
 
-export const readTranslations = async (reader: () => Promise<Record<Language, Translations>>): Promise<Either<Error, Record<Language, Translations>>> => {
+export const readTranslations = async (reader: () => Promise<Either<Error, Record<Language, Translations>>>): Promise<Either<Error, Record<Language, Translations>>> => {
      try {
-          const translations = await reader()
-          return right(translations)
+          return await reader()
      } catch (error) {
           return left(error as Error)
      }
@@ -72,7 +71,7 @@ export const addMissingTranslations = async (defaultLanguage: Language, dependen
 }
 
 export type TranslationsParserDependencies = {
-     reader: () => Promise<Record<Language, Translations>>
+     reader: () => Promise<Either<Error, Record<Language, Translations>>>
      writer: (translations: Record<Language, Translations>) => Promise<Either<Error, void>>
      translator: (text: string) => Promise<string>
 }
