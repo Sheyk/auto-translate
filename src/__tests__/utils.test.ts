@@ -1,4 +1,4 @@
-import { left, right, isLeft, isRight, chain, Either } from '../utils';
+import { left, right, isLeft, isRight, lift, Either } from '../utils';
 
 describe('Either utilities', () => {
   describe('left and right constructors', () => {
@@ -29,12 +29,12 @@ describe('Either utilities', () => {
 });
 
 describe('chain function', () => {
-  it('should chain successful operations with andThen', () => {
+  it('should chain successful operations with flatMap', () => {
     const addOne = (x: number) => right(x + 1);
     const multiplyByTwo = (x: number) => right(x * 2);
 
-    const chained = chain(addOne)
-      .andThen(multiplyByTwo);
+    const chained = lift(addOne)
+      .flatMap(multiplyByTwo);
 
     const result = chained.result(5);
     
@@ -47,7 +47,7 @@ describe('chain function', () => {
   it('should transform values with map', () => {
     const addOne = (x: number) => right(x + 1);
     
-    const chained = chain(addOne)
+    const chained = lift(addOne)
       .map(x => x * 2);
 
     const result = chained.result(5);
@@ -61,7 +61,7 @@ describe('chain function', () => {
   it('should transform errors with mapError', () => {
     const failOperation = (x: number) => left(`Failed at value: ${x}`);
     
-    const chained = chain(failOperation)
+    const chained = lift(failOperation)
       .mapError(error => `Custom error: ${error}`);
 
     const result = chained.result(5);
@@ -76,8 +76,8 @@ describe('chain function', () => {
     const addOne = (x: number) => right(x + 1);
     const failOperation = (x: number) => left(`Failed at value: ${x}`);
 
-    const chained = chain(addOne)
-      .andThen(failOperation);
+    const chained = lift(addOne)
+      .flatMap(failOperation);
 
     const result = chained.result(5);
     
@@ -93,8 +93,8 @@ describe('chain function', () => {
       throw new Error(`Exception at value: ${x}`);
     };
 
-    const chained = chain(addOne)
-      .andThen(throwError);
+    const chained = lift(addOne)
+      .flatMap(throwError);
 
     const result = chained.result(5);
     
@@ -107,7 +107,7 @@ describe('chain function', () => {
 
   it('should handle empty chain', () => {
     const identity = (x: number) => right(x);
-    const chained = chain(identity);
+    const chained = lift(identity);
 
     const result = chained.result(42);
     
@@ -127,9 +127,9 @@ describe('chain function', () => {
       return num > 0 ? right(num) : left('Number must be positive');
     };
 
-    const chained = chain(parseNumber)
+    const chained = lift(parseNumber)
       .map(num => num * 2) // Transform the number
-      .andThen(validatePositive); // Validate the transformed number
+      .flatMap(validatePositive); // Validate the transformed number
 
     // Test successful case
     const successResult = chained.result('5');
@@ -154,14 +154,14 @@ describe('chain function', () => {
   });
 
   it('should handle complex transformations', () => {
-    const parseNumber = (str: string) => {
+    const parseNumber = (str: string) : Either<string, number> => {
       const num = parseInt(str, 10);
       return isNaN(num) ? left('Invalid number') : right(num);
     };
 
-    const chained = chain(parseNumber)
-      .map((num: any) => typeof num === 'number' ? num * 2 : 0) // Double the number
-      .map((num: any) => typeof num === 'number' ? num + 1 : 0) // Add 1
+    const chained = lift(parseNumber)
+      .map(num => num * 2) // Double the number
+      .map(num => num + 1) // Add 1
       .mapError(error => `Parsing failed: ${error}`); // Transform error
 
     // Test successful case
