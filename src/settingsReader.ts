@@ -61,6 +61,10 @@ export const readSettingsFile = (): Either<Error, Settings> => {
     if (rawSettings.openai && !rawSettings.openai.apiKey && process.env.OPENAI_API_KEY) {
       rawSettings.openai.apiKey = process.env.OPENAI_API_KEY
     }
+
+    if (!rawSettings.openai || !rawSettings.openai.apiKey) {
+      return left(new Error('Settings file is missing required field: openai.apiKey'))
+    }
     
     // Validate and fix settings (ensure default is in supported array)
     const validatedSettings = validateAndFixSettings(rawSettings)
