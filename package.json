@@ -38,12 +38,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sheyk/auto-translate.git"
+    "url": "git+https://github.com/Sheyk/auto-translatr.git"
   },
   "bugs": {
-    "url": "https://github.com/Sheyk/auto-translate/issues"
+    "url": "https://github.com/Sheyk/auto-translatr/issues"
   },
-  "homepage": "https://github.com/Sheyk/auto-translate#readme",
+  "homepage": "https://github.com/Sheyk/auto-translatr#readme",
   "files": [
     "dist",
     "README.md"

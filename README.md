@@ -388,8 +388,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ### Development Setup
 
 ```bash
-git clone https://github.com/Sheyk/auto-translate.git
-cd auto-translate
+git clone https://github.com/Sheyk/auto-translatr.git
+cd auto-translatr
 npm install
 npm run test
 npm run build
@@ -401,8 +401,8 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🔗 Links
 
-- **Repository**: [https://github.com/Sheyk/auto-translate](https://github.com/Sheyk/auto-translate)
-- **Issues**: [https://github.com/Sheyk/auto-translate/issues](https://github.com/Sheyk/auto-translate/issues)
+- **Repository**: [https://github.com/Sheyk/auto-translatr](https://github.com/Sheyk/auto-translatr)
+- **Issues**: [https://github.com/Sheyk/auto-translatr/issues](https://github.com/Sheyk/auto-translatr)
 - **NPM Package**: [https://www.npmjs.com/package/auto-translatr](https://www.npmjs.com/package/auto-translatr)
 
 ---
