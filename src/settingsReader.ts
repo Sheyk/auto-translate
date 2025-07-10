@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
+import * as readline from 'readline'
 import { Either, left, right } from './utils'
 import { LlmConfiguration } from './modelConfiguration'
 import { Prettify } from './utils'
@@ -110,8 +111,23 @@ export const readSettingsFile = (): Either<Error, Settings> => {
   }
 }
 
+// Helper function to prompt user input
+const promptUser = (question: string): Promise<string> => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  })
+
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close()
+      resolve(answer.trim().toLowerCase())
+    })
+  })
+}
+
 // Helper function to create default settings file
-export const createDefaultSettingsFile = (): Either<Error, Settings> => {
+export const createDefaultSettingsFile = async (): Promise<Either<Error, Settings>> => {
   try {
     const settingsPath = path.join(process.cwd(), SETTINGS_FILE)
     const defaultSettings = getDefaultSettings()
@@ -138,6 +154,22 @@ export const createDefaultSettingsFile = (): Either<Error, Settings> => {
       )
     else defaultSettings.openai.apiKey = process.env.OPENAI_API_KEY
 
+    // Ask user about default languages
+    console.log(`\n🌍 Default supported languages: ${defaultSettings.supported.join(', ')}`)
+    const userResponse = await promptUser('Do you want to use these default languages? (Y/N): ')
+
+    if (userResponse === 'n' || userResponse === 'no') {
+      console.log(
+        `\n📝 Please edit the 'supported' property in ${SETTINGS_FILE} to include your desired languages, then run the command again.`
+      )
+      process.exit(0)
+    } else if (userResponse === 'y' || userResponse === 'yes') {
+      console.log('✅ Using default languages. Continuing...')
+    } else {
+      console.log('❓ Invalid response. Please edit the settings file manually if needed.')
+      process.exit(0)
+    }
+
     return right(defaultSettings)
   } catch (error) {
     return left(error as Error)
@@ -145,12 +177,12 @@ export const createDefaultSettingsFile = (): Either<Error, Settings> => {
 }
 
 // Helper function to initialize settings (creates defaults if none exist)
-export const initializeSettings = (): Either<Error, Settings> => {
+export const initializeSettings = async (): Promise<Either<Error, Settings>> => {
   const readResult = readSettingsFile()
 
   if (readResult.type === 'left') {
     console.log(`⚙️ ${readResult.value.message}, creating default settings...`)
-    return createDefaultSettingsFile()
+    return await createDefaultSettingsFile()
   }
 
   console.log(`⚙️ Loaded settings from ${SETTINGS_FILE}`)

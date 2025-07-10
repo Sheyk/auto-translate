@@ -10,6 +10,20 @@ import {
 } from '../settingsReader'
 import { isLeft, isRight } from '../utils'
 
+// Mock readline
+const mockQuestion = jest.fn()
+const mockClose = jest.fn()
+jest.mock('readline', () => ({
+  createInterface: jest.fn(() => ({
+    question: mockQuestion,
+    close: mockClose
+  }))
+}))
+
+// Mock process.exit
+const mockProcessExit = jest.fn()
+jest.spyOn(process, 'exit').mockImplementation(mockProcessExit as any)
+
 // Mock console methods
 const originalConsoleLog = console.log
 const originalConsoleWarn = console.warn
@@ -22,16 +36,12 @@ beforeEach(() => {
 
   // Clear all mocks before each test
   jest.clearAllMocks()
-  jest.restoreAllMocks()
 })
 
 afterEach(() => {
   console.log = originalConsoleLog
   console.warn = originalConsoleWarn
   console.error = originalConsoleError
-
-  // Restore all mocks after each test
-  jest.restoreAllMocks()
 })
 
 describe('settingsReader', () => {
@@ -351,11 +361,16 @@ describe('settingsReader', () => {
       process.chdir(originalCwd)
     })
 
-    it('should create settings file with default values when environment API key is provided', () => {
+    it('should create settings file with default values when environment API key is provided and user says yes', async () => {
       process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
 
-      const result = createDefaultSettingsFile()
+      // Mock user responding "yes"
+      mockQuestion.mockImplementation((question, callback) => {
+        callback('y')
+      })
+
+      const result = await createDefaultSettingsFile()
 
       expect(isRight(result)).toBe(true)
       expect(fs.existsSync(settingsFilePath)).toBe(true)
@@ -377,14 +392,49 @@ describe('settingsReader', () => {
         // But should return settings with environment API key
         expect(result.value.openai.apiKey).toBe('test-env-key')
       }
+
+      expect(console.log).toHaveBeenCalledWith('✅ Using default languages. Continuing...')
     })
 
-    it('should return error when environment API key is not provided', () => {
+    it('should exit when user says no to default languages', async () => {
+      process.env.OPENAI_API_KEY = 'test-env-key'
+      process.chdir(testDir)
+
+      // Mock user responding "no"
+      mockQuestion.mockImplementation((question, callback) => {
+        callback('n')
+      })
+
+      await createDefaultSettingsFile()
+
+      expect(mockProcessExit).toHaveBeenCalledWith(0)
+      expect(console.log).toHaveBeenCalledWith(
+        "\n📝 Please edit the 'supported' property in auto-translate.settings.json to include your desired languages, then run the command again."
+      )
+    })
+
+    it('should handle invalid user response gracefully', async () => {
+      process.env.OPENAI_API_KEY = 'test-env-key'
+      process.chdir(testDir)
+
+      // Mock user responding with invalid input
+      mockQuestion.mockImplementation((question, callback) => {
+        callback('maybe')
+      })
+
+      const result = await createDefaultSettingsFile()
+
+      expect(isRight(result)).toBe(true)
+      expect(mockProcessExit).toHaveBeenCalledWith(0)
+      expect(console.log).toHaveBeenCalledWith('❓ Invalid response. Please edit the settings file manually if needed.')
+    })
+
+    it('should return error when environment API key is not provided', async () => {
       // Ensure no API key is set
       delete process.env.OPENAI_API_KEY
       process.chdir(testDir)
 
-      const result = createDefaultSettingsFile()
+      const result = await createDefaultSettingsFile()
 
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
@@ -392,13 +442,21 @@ describe('settingsReader', () => {
           'Settings file is missing required field: openai.apiKey. Please set your OpenAI API key in the file or as OPENAI_API_KEY environment variable.'
         )
       }
+
+      // Should not prompt user if API key is missing
+      expect(mockQuestion).not.toHaveBeenCalled()
     })
 
-    it('should create settings file and return settings with environment API key', () => {
+    it('should create settings file and return settings with environment API key', async () => {
       process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
 
-      const result = createDefaultSettingsFile()
+      // Mock user responding "yes"
+      mockQuestion.mockImplementation((question, callback) => {
+        callback('yes')
+      })
+
+      const result = await createDefaultSettingsFile()
 
       expect(isRight(result)).toBe(true)
 
@@ -412,13 +470,19 @@ describe('settingsReader', () => {
       }
     })
 
-    it('should log creation messages when environment API key is provided', () => {
+    it('should log creation messages when environment API key is provided', async () => {
       process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
 
-      createDefaultSettingsFile()
+      // Mock user responding "y"
+      mockQuestion.mockImplementation((question, callback) => {
+        callback('y')
+      })
+
+      await createDefaultSettingsFile()
 
       expect(console.log).toHaveBeenCalledWith('📄 Created auto-translate.settings.json with default settings')
+      expect(console.log).toHaveBeenCalledWith('\n🌍 Default supported languages: en, fr, de')
     })
   })
 
@@ -429,11 +493,16 @@ describe('settingsReader', () => {
       process.chdir(originalCwd)
     })
 
-    it('should create default settings when file does not exist and environment API key is provided', () => {
+    it('should create default settings when file does not exist and environment API key is provided', async () => {
       process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
 
-      const result = initializeSettings()
+      // Mock user responding "yes"
+      mockQuestion.mockImplementation((question, callback) => {
+        callback('yes')
+      })
+
+      const result = await initializeSettings()
 
       expect(isRight(result)).toBe(true)
       expect(fs.existsSync(settingsFilePath)).toBe(true)
@@ -455,12 +524,12 @@ describe('settingsReader', () => {
       expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translate.settings.json not found, creating default settings...')
     })
 
-    it('should return error when file does not exist and environment API key is not provided', () => {
+    it('should return error when file does not exist and environment API key is not provided', async () => {
       // Ensure no API key is set
       delete process.env.OPENAI_API_KEY
       process.chdir(testDir)
 
-      const result = initializeSettings()
+      const result = await initializeSettings()
 
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
@@ -472,7 +541,7 @@ describe('settingsReader', () => {
       expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translate.settings.json not found, creating default settings...')
     })
 
-    it('should load existing settings when file exists', () => {
+    it('should load existing settings when file exists', async () => {
       const existingSettings: Settings = {
         default: 'ja',
         supported: ['ja', 'en', 'ko'],
@@ -488,7 +557,7 @@ describe('settingsReader', () => {
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(existingSettings, null, 2))
 
-      const result = initializeSettings()
+      const result = await initializeSettings()
 
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
@@ -496,15 +565,18 @@ describe('settingsReader', () => {
       }
 
       expect(console.log).toHaveBeenCalledWith('⚙️ Loaded settings from auto-translate.settings.json')
+
+      // Should not prompt user when file already exists
+      expect(mockQuestion).not.toHaveBeenCalled()
     })
 
-    it('should return error when file has invalid JSON and environment API key is not provided', () => {
+    it('should return error when file has invalid JSON and environment API key is not provided', async () => {
       // Ensure no API key is set
       delete process.env.OPENAI_API_KEY
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, '{ invalid json }')
 
-      const result = initializeSettings()
+      const result = await initializeSettings()
 
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
@@ -517,12 +589,17 @@ describe('settingsReader', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('creating default settings...'))
     })
 
-    it('should create default settings when file has invalid JSON and environment API key is provided', () => {
+    it('should create default settings when file has invalid JSON and environment API key is provided', async () => {
       process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, '{ invalid json }')
 
-      const result = initializeSettings()
+      // Mock user responding "yes"
+      mockQuestion.mockImplementation((question, callback) => {
+        callback('yes')
+      })
+
+      const result = await initializeSettings()
 
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
@@ -541,6 +618,21 @@ describe('settingsReader', () => {
 
       // Should have logged the error and created defaults
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('creating default settings...'))
+    })
+
+    it('should exit when user says no to default languages during file creation', async () => {
+      process.env.OPENAI_API_KEY = 'test-env-key'
+      process.chdir(testDir)
+
+      // Mock user responding "no"
+      mockQuestion.mockImplementation((question, callback) => {
+        callback('no')
+      })
+
+      await initializeSettings()
+
+      expect(mockProcessExit).toHaveBeenCalledWith(0)
+      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translate.settings.json not found, creating default settings...')
     })
   })
 
