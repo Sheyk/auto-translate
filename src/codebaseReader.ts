@@ -2,10 +2,11 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { Language, Translations } from './translationsReader'
 import { isLeft, Either, left, right } from './utils'
+import { CodebaseReaderConfig } from './settingsReader'
 
   
   // Helper function to recursively find files with specific extensions
-  const findFiles = (dir: string, extensions: string[]): string[] => {
+  const findFiles = (dir: string, config: CodebaseReaderConfig): string[] => {
     const files: string[] = []
     
     try {
@@ -16,13 +17,13 @@ import { isLeft, Either, left, right } from './utils'
         const stat = fs.statSync(fullPath)
         
         if (stat.isDirectory()) {
-          // Skip common directories that shouldn't contain translation calls
-          if (!['node_modules', '.git', 'dist', 'build', '.next', 'coverage'].includes(item)) {
-            files.push(...findFiles(fullPath, extensions))
+          // Skip directories that are in the ignore list
+          if (!config.ignore.includes(item)) {
+            files.push(...findFiles(fullPath, config))
           }
         } else if (stat.isFile()) {
           const ext = path.extname(item)
-          if (extensions.includes(ext)) {
+          if (config.include.includes(ext)) {
             files.push(fullPath)
           }
         }
@@ -57,16 +58,13 @@ import { isLeft, Either, left, right } from './utils'
     return matches
   }
   
-  export const read = async (): Promise<Either<Error, Translations>> => {
+  export const read = async (config: CodebaseReaderConfig): Promise<Either<Error, Translations>> => {
     try {
       console.log('🔍 Searching for translation calls in codebase...')
       
-      // Define file extensions to search
-      const extensions = ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte']
-      
       // Start from current working directory
       const rootDir = process.cwd()
-      const files = findFiles(rootDir, extensions)
+      const files = findFiles(rootDir, config)
       
       console.log(`📁 Found ${files.length} files to scan`)
       

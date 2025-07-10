@@ -6,20 +6,24 @@ import {
   Language,
 } from '../translationsReader';
 import { isLeft, isRight } from '../utils';
+import { TranslationReaderConfig } from '../settingsReader';
 import * as path from 'path';
 
 jest.mock('fs');
 const mockedFs = fs as jest.Mocked<typeof fs>;
 
-const i18nFolder = 'i18n';
 const CWD = '/fake/project/root';
 
 // Helper to get expected file path
-const getTranslationFilePath = (language: Language): string => {
-  return path.join(CWD, i18nFolder, `${language}.json`);
+const getTranslationFilePath = (language: Language, outputDir: string = 'i18n'): string => {
+  return path.join(CWD, outputDir, `${language}.json`);
 };
 
 describe('translationsReader', () => {
+  const defaultConfig: TranslationReaderConfig = {
+    output: 'i18n'
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     
@@ -52,7 +56,7 @@ describe('translationsReader', () => {
         return '{}';
       });
 
-      const result = readAllTranslations(supportedLanguages);
+      const result = readAllTranslations(supportedLanguages, defaultConfig);
 
       expect(isRight(result)).toBe(true);
       if (isRight(result)) {
@@ -77,7 +81,7 @@ describe('translationsReader', () => {
         return '{}';
       });
 
-      const result = readAllTranslations(supportedLanguages);
+      const result = readAllTranslations(supportedLanguages, defaultConfig);
 
       expect(isRight(result)).toBe(true);
       if (isRight(result)) {
@@ -89,7 +93,7 @@ describe('translationsReader', () => {
     });
 
     it('should return an empty object if no languages are provided', () => {
-      const result = readAllTranslations([]);
+      const result = readAllTranslations([], defaultConfig);
       
       expect(isRight(result)).toBe(true);
       if (isRight(result)) {
@@ -113,7 +117,7 @@ describe('translationsReader', () => {
         return '{}';
       });
 
-      const result = readAllTranslations(supportedLanguages);
+      const result = readAllTranslations(supportedLanguages, defaultConfig);
 
       expect(isRight(result)).toBe(true);
       if (isRight(result)) {
@@ -144,7 +148,7 @@ describe('translationsReader', () => {
         return '{}';
       });
 
-      const result = readAllTranslations(supportedLanguages);
+      const result = readAllTranslations(supportedLanguages, defaultConfig);
 
       expect(isRight(result)).toBe(true);
       if (isRight(result)) {
@@ -164,13 +168,41 @@ describe('translationsReader', () => {
       
       mockedFs.existsSync.mockReturnValue(false); // No files exist
 
-      const result = readAllTranslations(manyLanguages);
+      const result = readAllTranslations(manyLanguages, defaultConfig);
 
       expect(isRight(result)).toBe(true);
       if (isRight(result)) {
         expect(Object.keys(result.value)).toHaveLength(100);
         expect(Object.values(result.value).every(translations => Object.keys(translations).length === 0)).toBe(true);
       }
+    });
+
+    it('should use custom output directory', () => {
+      const customConfig: TranslationReaderConfig = {
+        output: 'translations'
+      };
+      const supportedLanguages = ['en'];
+      const enTranslations = { hello: 'Hello' };
+
+      mockedFs.existsSync.mockImplementation((p) => {
+        return p === getTranslationFilePath('en', 'translations');
+      });
+      mockedFs.readFileSync.mockImplementation((p) => {
+        if (p === getTranslationFilePath('en', 'translations')) {
+          return JSON.stringify(enTranslations);
+        }
+        return '{}';
+      });
+
+      const result = readAllTranslations(supportedLanguages, customConfig);
+
+      expect(isRight(result)).toBe(true);
+      if (isRight(result)) {
+        expect(result.value).toEqual({
+          en: enTranslations,
+        });
+      }
+      expect(mockedFs.existsSync).toHaveBeenCalledWith(getTranslationFilePath('en', 'translations'));
     });
   });
 
@@ -183,7 +215,7 @@ describe('translationsReader', () => {
       // Directory doesn't exist, file doesn't exist
       mockedFs.existsSync.mockReturnValue(false);
 
-      const result = writeLanguageFile(lang, translations);
+      const result = writeLanguageFile(lang, translations, defaultConfig);
 
       expect(isRight(result)).toBe(true);
       expect(mockedFs.mkdirSync).toHaveBeenCalledWith(path.dirname(filePath), { recursive: true });
@@ -200,7 +232,7 @@ describe('translationsReader', () => {
         return p === path.dirname(filePath); // directory exists
       });
 
-      const result = writeLanguageFile(lang, translations, { append: false });
+      const result = writeLanguageFile(lang, translations, defaultConfig, { append: false });
 
       expect(isRight(result)).toBe(true);
       // readFileSync should NOT be called when overwriting (append: false)
@@ -219,7 +251,7 @@ describe('translationsReader', () => {
       mockedFs.existsSync.mockReturnValue(true);
       mockedFs.readFileSync.mockReturnValue(JSON.stringify(existingTranslations));
 
-      const result = writeLanguageFile(lang, newTranslations, { append: true });
+      const result = writeLanguageFile(lang, newTranslations, defaultConfig, { append: true });
 
       expect(isRight(result)).toBe(true);
       expect(mockedFs.readFileSync).toHaveBeenCalledWith(filePath, 'utf-8');
@@ -236,7 +268,7 @@ describe('translationsReader', () => {
         throw error;
       });
 
-      const result = writeLanguageFile(lang, translations);
+      const result = writeLanguageFile(lang, translations, defaultConfig);
 
       expect(isLeft(result)).toBe(true);
       if (isLeft(result)) {
@@ -251,12 +283,29 @@ describe('translationsReader', () => {
       mockedFs.existsSync.mockReturnValue(true);
       mockedFs.readFileSync.mockReturnValue('{"malformed": json,}'); // Invalid JSON
 
-      const result = writeLanguageFile(lang, translations, { append: true });
+      const result = writeLanguageFile(lang, translations, defaultConfig, { append: true });
 
       expect(isLeft(result)).toBe(true);
       if (isLeft(result)) {
         expect(result.value.message).toContain(`Failed to read existing translation file for '${lang}'`);
       }
+    });
+
+    it('should use custom output directory', () => {
+      const customConfig: TranslationReaderConfig = {
+        output: 'translations'
+      };
+      const lang = 'de';
+      const translations = { welcome: 'Willkommen' };
+      const filePath = getTranslationFilePath(lang, 'translations');
+
+      mockedFs.existsSync.mockReturnValue(false);
+
+      const result = writeLanguageFile(lang, translations, customConfig);
+
+      expect(isRight(result)).toBe(true);
+      expect(mockedFs.mkdirSync).toHaveBeenCalledWith(path.dirname(filePath), { recursive: true });
+      expect(mockedFs.writeFileSync).toHaveBeenCalledWith(filePath, JSON.stringify(translations, null, 2), 'utf-8');
     });
   });
 
@@ -270,7 +319,7 @@ describe('translationsReader', () => {
       // Setup mocks for successful writes
       mockedFs.existsSync.mockReturnValue(false); // directories don't exist
 
-      const result = await writeLanguageFiles(translations, { append: false });
+      const result = await writeLanguageFiles(translations, defaultConfig, { append: false });
 
       expect(isRight(result)).toBe(true);
       expect(mockedFs.writeFileSync).toHaveBeenCalledTimes(2);
@@ -292,7 +341,7 @@ describe('translationsReader', () => {
         }
       });
 
-      const result = await writeLanguageFiles(translations, { append: false });
+      const result = await writeLanguageFiles(translations, defaultConfig, { append: false });
 
       expect(isLeft(result)).toBe(true);
       if (isLeft(result)) {
@@ -301,6 +350,22 @@ describe('translationsReader', () => {
       // It should have tried to write 'en' successfully and then failed on 'fr'
       expect(mockedFs.writeFileSync).toHaveBeenCalledWith(getTranslationFilePath('en'), JSON.stringify(translations.en, null, 2), 'utf-8');
       expect(mockedFs.writeFileSync).toHaveBeenCalledTimes(2);
+    });
+
+    it('should use custom output directory', async () => {
+      const customConfig: TranslationReaderConfig = {
+        output: 'translations'
+      };
+      const translations = {
+        en: { hello: 'Hello' },
+      };
+
+      mockedFs.existsSync.mockReturnValue(false);
+
+      const result = await writeLanguageFiles(translations, customConfig, { append: false });
+
+      expect(isRight(result)).toBe(true);
+      expect(mockedFs.writeFileSync).toHaveBeenCalledWith(getTranslationFilePath('en', 'translations'), JSON.stringify(translations.en, null, 2), 'utf-8');
     });
   });
 }); 

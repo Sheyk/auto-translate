@@ -4,7 +4,18 @@ import { Either, left, right } from './utils'
 import { LlmConfiguration } from './modelConfiguration'
 import { Prettify } from './utils'
 
-export type Settings = Prettify<{ default: string, supported: string[] } & LlmConfiguration>
+export type Settings = Prettify<LanguageConfig & TranslationReaderConfig & CodebaseReaderConfig & LlmConfiguration>
+
+type LanguageConfig = { default: string, supported: string[] }
+
+export type TranslationReaderConfig = {
+  output: string
+}
+
+export type CodebaseReaderConfig = {
+  include: string[]
+  ignore: string[]
+}
 
 const SETTINGS_FILE = 'auto-translate.settings.json'
 
@@ -26,6 +37,9 @@ const validateAndFixSettings = (settings: Settings): Settings => {
 export const getDefaultSettings = (): Settings => ({
   default: 'en',
   supported: ['en', 'fr', 'de'],
+  output: 'i18n',
+  include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+  ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
   openai: {
     model: 'gpt-4o-mini',
     apiKey: process.env.OPENAI_API_KEY || ''
@@ -54,7 +68,20 @@ export const readSettingsFile = (): Either<Error, Settings> => {
     }
     
     if (!rawSettings.openai || !rawSettings.openai.model) {
-      return left(new Error('Settings file is missing required field: openai.model'))
+      return left(new Error('Settings file is missing required field: openai.model. Please set your OpenAI model in the file or as OPENAI_MODEL environment variable.'))
+    }
+
+    // Set defaults for new optional fields if missing
+    if (!rawSettings.output) {
+      rawSettings.output = 'i18n'
+    }
+    
+    if (!rawSettings.include || !Array.isArray(rawSettings.include)) {
+      rawSettings.include = ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte']
+    }
+    
+    if (!rawSettings.ignore || !Array.isArray(rawSettings.ignore)) {
+      rawSettings.ignore = ['node_modules', '.git', 'dist', 'build', '.next', 'coverage']
     }
     
     // Merge with environment variables for API key if not provided
@@ -63,7 +90,7 @@ export const readSettingsFile = (): Either<Error, Settings> => {
     }
 
     if (!rawSettings.openai || !rawSettings.openai.apiKey) {
-      return left(new Error('Settings file is missing required field: openai.apiKey'))
+      return left(new Error('Settings file is missing required field: openai.apiKey. Please set your OpenAI API key in the file or as OPENAI_API_KEY environment variable.'))
     }
     
     // Validate and fix settings (ensure default is in supported array)

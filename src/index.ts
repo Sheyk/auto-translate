@@ -3,10 +3,19 @@ import { Translations, Language, readAllTranslations, writeLanguageFiles, writeL
 import { addMissingTranslations } from './translationsParser'
 import { prompt } from './openaiClient'
 import { read } from './codebaseReader'
-import { Settings, loadSettings } from './settingsReader'
+import { Settings, loadSettings, TranslationReaderConfig, CodebaseReaderConfig } from './settingsReader'
 
 export const parseCodeBaseTranslations = async (settings: Settings) => {
-  const readResult = await read()
+  const codebaseConfig: CodebaseReaderConfig = {
+    include: settings.include,
+    ignore: settings.ignore
+  }
+  
+  const translationConfig: TranslationReaderConfig = {
+    output: settings.output
+  }
+  
+  const readResult = await read(codebaseConfig)
   
   if (isLeft(readResult)) {
     console.error('❌ Error parsing codebase translations:', readResult.value.message)
@@ -14,7 +23,7 @@ export const parseCodeBaseTranslations = async (settings: Settings) => {
   }
   
   const defaultTranslations = readResult.value
-  const writeResult = writeLanguageFile(settings.default, defaultTranslations, { append: false })
+  const writeResult = writeLanguageFile(settings.default, defaultTranslations, translationConfig, { append: false })
   
   if (isLeft(writeResult)) {
     console.error('❌ Failed to write translation file:', writeResult.value.message)
@@ -22,13 +31,17 @@ export const parseCodeBaseTranslations = async (settings: Settings) => {
   }
   
   console.log(`✅ Successfully updated ${settings.default}.json with ${Object.keys(defaultTranslations).length} translations`)
-  console.log(`📍 Translation file location: ./i18n/${settings.default}.json`)
+  console.log(`📍 Translation file location: ./${settings.output}/${settings.default}.json`)
 }
 
 const translate = async (settings: Settings) => {
+  const translationConfig: TranslationReaderConfig = {
+    output: settings.output
+  }
+  
   await addMissingTranslations(settings.default, {
-    reader: () => Promise.resolve(readAllTranslations(settings.supported)),
-    writer: (translations: Record<Language, Translations>) => writeLanguageFiles(translations, { append: true}),
+    reader: () => Promise.resolve(readAllTranslations(settings.supported, translationConfig)),
+    writer: (translations: Record<Language, Translations>) => writeLanguageFiles(translations, translationConfig, { append: true}),
     translator: (text: string) => prompt(text, settings.openai.model, settings.openai.apiKey)
   })
 }

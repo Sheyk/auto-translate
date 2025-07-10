@@ -96,6 +96,9 @@ describe('settingsReader', () => {
       expect(settings).toEqual({
         default: 'en',
         supported: ['en', 'fr', 'de'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4o-mini',
           apiKey: ''
@@ -111,6 +114,9 @@ describe('settingsReader', () => {
       expect(settings).toEqual({
         default: 'en',
         supported: ['en', 'fr', 'de'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4o-mini',
           apiKey: 'test-api-key'
@@ -141,6 +147,9 @@ describe('settingsReader', () => {
       const validSettings: Settings = {
         default: 'es',
         supported: ['es', 'en', 'pt'],
+        output: 'translations',
+        include: ['.js', '.ts'],
+        ignore: ['node_modules'],
         openai: {
           model: 'gpt-4',
           apiKey: 'file-api-key'
@@ -162,6 +171,9 @@ describe('settingsReader', () => {
       const settingsWithMissingDefault: Settings = {
         default: 'ja',
         supported: ['en', 'fr'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4',
           apiKey: 'test-key'
@@ -191,6 +203,9 @@ describe('settingsReader', () => {
       const settingsWithoutApiKey: Settings = {
         default: 'fr',
         supported: ['fr', 'en'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-3.5-turbo',
           apiKey: ''
@@ -214,6 +229,9 @@ describe('settingsReader', () => {
       const settingsWithApiKey: Settings = {
         default: 'de',
         supported: ['de', 'en'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4',
           apiKey: 'file-api-key'
@@ -344,6 +362,9 @@ describe('settingsReader', () => {
       expect(fileContent).toEqual({
         default: 'en',
         supported: ['en', 'fr', 'de'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4o-mini',
           apiKey: ''  // Should be empty in file for security
@@ -399,6 +420,9 @@ describe('settingsReader', () => {
       const existingSettings: Settings = {
         default: 'ja',
         supported: ['ja', 'en', 'ko'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4-turbo',
           apiKey: 'existing-key'
@@ -432,6 +456,9 @@ describe('settingsReader', () => {
         expect(result.value).toEqual({
           default: 'en',
           supported: ['en', 'fr', 'de'],
+          output: 'i18n',
+          include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+          ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
           openai: {
             model: 'gpt-4o-mini',
             apiKey: ''
@@ -476,6 +503,9 @@ describe('settingsReader', () => {
       const validSettings: Settings = {
         default: 'pt',
         supported: ['pt', 'es', 'en'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4',
           apiKey: 'test-key'

@@ -431,6 +431,9 @@ export default App`
       expect(settings).toEqual({
         default: 'en',
         supported: ['en', 'fr', 'de'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4o-mini',
           apiKey: ''  // Should be empty in file for security
@@ -511,6 +514,9 @@ export default App`
       const customSettings = {
         default: 'es',
         supported: ['es', 'pt'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-3.5-turbo',
           apiKey: 'custom-key-from-file'

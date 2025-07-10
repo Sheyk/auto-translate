@@ -1,14 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Either, left, right, isLeft } from './utils';
+import { TranslationReaderConfig } from './settingsReader';
 
 export type Language = string;
 export type Translations = Record<string, string>;
 
-const i18nFolder = 'i18n';
-
-const getTranslationFilePath = (language: Language): string => {
-  return path.join(process.cwd(), i18nFolder, `${language}.json`);
+const getTranslationFilePath = (language: Language, config: TranslationReaderConfig): string => {
+  return path.join(process.cwd(), config.output, `${language}.json`);
 };
 
 const readTranslationFile = (filePath: string): Either<Error, Translations> => {
@@ -24,12 +23,12 @@ const readTranslationFile = (filePath: string): Either<Error, Translations> => {
   }
 };
 
-export const readAllTranslations = (supportedLanguages: Language[]): Either<Error, Record<Language, Translations>> => {
+export const readAllTranslations = (supportedLanguages: Language[], config: TranslationReaderConfig): Either<Error, Record<Language, Translations>> => {
   try {
     const translations: Record<Language, Translations> = {};
     
     for (const lang of supportedLanguages) {
-      const filePath = getTranslationFilePath(lang);
+      const filePath = getTranslationFilePath(lang, config);
       const result = readTranslationFile(filePath);
       
       if (isLeft(result)) {
@@ -50,15 +49,16 @@ export const readAllTranslations = (supportedLanguages: Language[]): Either<Erro
 export const writeLanguageFile = (
   language: Language,
   translations: Translations,
+  config: TranslationReaderConfig,
   options: { append: boolean } = { append: false }
 ): Either<Error, void> => {
   try {
-    const filePath = getTranslationFilePath(language);
-    const i18nDir = path.dirname(filePath);
+    const filePath = getTranslationFilePath(language, config);
+    const outputDir = path.dirname(filePath);
 
     // Ensure directory exists
-    if (!fs.existsSync(i18nDir)) {
-      fs.mkdirSync(i18nDir, { recursive: true });
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
 
     let existingTranslations: Translations = {};
@@ -84,11 +84,12 @@ export const writeLanguageFile = (
 
 export const writeLanguageFiles = async (
   translations: Record<Language, Translations>,
+  config: TranslationReaderConfig,
   options: { append: boolean }
 ): Promise<Either<Error, void>> => {
   try {
     for (const lang of Object.keys(translations)) {
-      const result = writeLanguageFile(lang, translations[lang], options);
+      const result = writeLanguageFile(lang, translations[lang], config, options);
       if (isLeft(result)) {
         return result;
       }
