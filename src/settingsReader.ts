@@ -18,7 +18,7 @@ export type CodebaseReaderConfig = {
   ignore: string[]
 }
 
-const SETTINGS_FILE = 'auto-translate.settings.json'
+const SETTINGS_FILE = 'auto-translatr.settings.json'
 
 // Helper function to validate and fix settings
 const validateAndFixSettings = (settings: Settings): Settings => {

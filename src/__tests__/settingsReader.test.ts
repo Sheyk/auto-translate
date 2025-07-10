@@ -46,7 +46,7 @@ afterEach(() => {
 
 describe('settingsReader', () => {
   const testDir = path.join(__dirname, 'test-settings')
-  const settingsFileName = 'auto-translate.settings.json'
+  const settingsFileName = 'auto-translatr.settings.json'
   const settingsFilePath = path.join(testDir, settingsFileName)
   const originalEnv = process.env.OPENAI_API_KEY
 
@@ -150,7 +150,7 @@ describe('settingsReader', () => {
 
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
-        expect(result.value.message).toBe('Settings file auto-translate.settings.json not found')
+        expect(result.value.message).toBe('Settings file auto-translatr.settings.json not found')
       }
     })
 
@@ -409,7 +409,7 @@ describe('settingsReader', () => {
 
       expect(mockProcessExit).toHaveBeenCalledWith(0)
       expect(console.log).toHaveBeenCalledWith(
-        "\n📝 Please edit the 'supported' property in auto-translate.settings.json to include your desired languages, then run the command again."
+        "\n📝 Please edit the 'supported' property in auto-translatr.settings.json to include your desired languages, then run the command again."
       )
     })
 
@@ -481,7 +481,7 @@ describe('settingsReader', () => {
 
       await createDefaultSettingsFile()
 
-      expect(console.log).toHaveBeenCalledWith('📄 Created auto-translate.settings.json with default settings')
+      expect(console.log).toHaveBeenCalledWith('📄 Created auto-translatr.settings.json with default settings')
       expect(console.log).toHaveBeenCalledWith('\n🌍 Default supported languages: en, fr, de')
     })
   })
@@ -521,7 +521,7 @@ describe('settingsReader', () => {
         })
       }
 
-      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translate.settings.json not found, creating default settings...')
+      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translatr.settings.json not found, creating default settings...')
     })
 
     it('should return error when file does not exist and environment API key is not provided', async () => {
@@ -538,7 +538,7 @@ describe('settingsReader', () => {
         )
       }
 
-      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translate.settings.json not found, creating default settings...')
+      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translatr.settings.json not found, creating default settings...')
     })
 
     it('should load existing settings when file exists', async () => {
@@ -564,7 +564,7 @@ describe('settingsReader', () => {
         expect(result.value).toEqual(existingSettings)
       }
 
-      expect(console.log).toHaveBeenCalledWith('⚙️ Loaded settings from auto-translate.settings.json')
+      expect(console.log).toHaveBeenCalledWith('⚙️ Loaded settings from auto-translatr.settings.json')
 
       // Should not prompt user when file already exists
       expect(mockQuestion).not.toHaveBeenCalled()
@@ -632,7 +632,7 @@ describe('settingsReader', () => {
       await initializeSettings()
 
       expect(mockProcessExit).toHaveBeenCalledWith(0)
-      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translate.settings.json not found, creating default settings...')
+      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translatr.settings.json not found, creating default settings...')
     })
   })
 
@@ -666,7 +666,7 @@ describe('settingsReader', () => {
         expect(result.value).toEqual(existingSettings)
       }
 
-      expect(console.log).toHaveBeenCalledWith('⚙️ Loaded settings from auto-translate.settings.json')
+      expect(console.log).toHaveBeenCalledWith('⚙️ Loaded settings from auto-translatr.settings.json')
     })
 
     it('should return error when file does not exist', () => {
@@ -678,7 +678,7 @@ describe('settingsReader', () => {
       expect(fs.existsSync(settingsFilePath)).toBe(false)
 
       if (isLeft(result)) {
-        expect(result.value.message).toBe('Settings file auto-translate.settings.json not found')
+        expect(result.value.message).toBe('Settings file auto-translatr.settings.json not found')
       }
     })
 

@@ -16,17 +16,17 @@
 ### Global Installation (CLI)
 
 ```bash
-npm install -g @sheyk/auto-translate
+npm install -g auto-translatr
 ```
 
 ### Local Installation (Project)
 
 ```bash
-npm install @sheyk/auto-translate
+npm install auto-translatr
 # or
-yarn add @sheyk/auto-translate
+yarn add auto-translatr
 # or
-pnpm add @sheyk/auto-translate
+pnpm add auto-translatr
 ```
 
 ## 🚀 Quick Start
@@ -41,10 +41,10 @@ pnpm add @sheyk/auto-translate
 
    ```bash
    # If installed globally
-   auto-translate
+   auto-translatr
 
    # If installed locally
-   npx auto-translate
+   npx auto-translatr
    ```
 
 3. **Follow the prompts** to configure your languages (first run only)
@@ -105,7 +105,7 @@ Uses OpenAI to translate missing keys:
 
 ## 📖 Integration with i18n Libraries
 
-Auto Translate works seamlessly with popular i18n libraries. The key is configuring the `output` directory in your `auto-translate.settings.json` to match where your i18n library expects translation files.
+Auto Translate works seamlessly with popular i18n libraries. The key is configuring the `output` directory in your `auto-translatr.settings.json` to match where your i18n library expects translation files.
 
 ### 🔵 Nuxt.js + @nuxtjs/i18n (Complete Example)
 
@@ -117,7 +117,7 @@ npm install @nuxtjs/i18n@8
 
 #### 2. Configure Auto Translate Settings
 
-Create `auto-translate.settings.json`:
+Create `auto-translatr.settings.json`:
 
 ```json
 {
@@ -155,7 +155,7 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'en',
     lazy: true,
-    langDir: 'i18n/', // This matches auto-translate output directory
+    langDir: 'i18n/', // This matches auto-translatr output directory
     strategy: 'prefix_except_default',
     detectBrowserLanguage: {
       useCookie: true,
@@ -173,8 +173,8 @@ export default defineNuxtConfig({
   <div class="app-container">
     <h1>{{ t('Hello, welcome to my website') }}</h1>
 
-    <p>{{ t('This is a test of the @sheyk/auto-translate package.') }}</p>
-    <p>{{ t('This text will be translated automatically using an LLM after using `npx auto-translate`.') }}</p>
+    <p>{{ t('This is a test of the auto-translatr package.') }}</p>
+    <p>{{ t('This text will be translated automatically using an LLM after using `npx auto-translatr`.') }}</p>
     <p>{{ t('Then it will be stored as i18n json files in a ./i18n folder.') }}</p>
 
     <div>
@@ -195,23 +195,23 @@ const { t, locale } = useI18n()
 
 ### 🟢 Vue.js + Vue I18n
 
-Follow the [Vue I18n official documentation](https://vue-i18n.intlify.dev/) for setup, then configure auto-translate's `output` to match your locale files directory (typically `src/locales/`).
+Follow the [Vue I18n official documentation](https://vue-i18n.intlify.dev/) for setup, then configure auto-translatr's `output` to match your locale files directory (typically `src/locales/`).
 
 ### 🔴 React.js + react-i18next
 
-Follow the [react-i18next documentation](https://react.i18next.com/) for setup, then configure auto-translate's `output` to match your locale files directory (typically `src/locales/`).
+Follow the [react-i18next documentation](https://react.i18next.com/) for setup, then configure auto-translatr's `output` to match your locale files directory (typically `src/locales/`).
 
 ### ⚫ Next.js + next-i18next
 
-Follow the [next-i18next documentation](https://github.com/i18next/next-i18next) for setup, then configure auto-translate's `output` to `public/locales/` to match Next.js conventions.
+Follow the [next-i18next documentation](https://github.com/i18next/next-i18next) for setup, then configure auto-translatr's `output` to `public/locales/` to match Next.js conventions.
 
 ### 🔄 Complete Workflow
 
-1. **Setup**: Install your preferred i18n library and configure it to read from the auto-translate output directory
+1. **Setup**: Install your preferred i18n library and configure it to read from the auto-translatr output directory
 
 2. **Code**: Write your application using `t('Your text here')` calls
 
-3. **Generate**: Run `npx auto-translate` to scan your code and generate translation files
+3. **Generate**: Run `npx auto-translatr` to scan your code and generate translation files
 
 4. **Verify**: Check the generated translation files in your output directory
 
@@ -219,11 +219,11 @@ Follow the [next-i18next documentation](https://github.com/i18next/next-i18next)
 
 ### 📁 Expected File Structure
 
-After running auto-translate with any of the above setups:
+After running auto-translatr with any of the above setups:
 
 ```
 your-project/
-├── auto-translate.settings.json
+├── auto-translatr.settings.json
 ├── [output-directory]/          # i18n/, src/locales/, or public/locales/
 │   ├── en.json                  # Source language (extracted from code)
 │   ├── fr.json                  # Auto-translated French
@@ -240,11 +240,11 @@ your-project/
 - **Consistent Function Name**: Always use `t()` as your translation function name across your project
 - **Meaningful Keys**: Use descriptive text as keys (e.g., `t('Welcome message')` instead of `t('msg1')`)
 - **Review Translations**: Always review AI-generated translations for accuracy
-- **Incremental Updates**: Auto-translate only adds missing translations, preserving your manual edits
+- **Incremental Updates**: Auto-translatr only adds missing translations, preserving your manual edits
 
 ## ⚙️ Configuration
 
-### Settings File: `auto-translate.settings.json`
+### Settings File: `auto-translatr.settings.json`
 
 The tool uses a settings file to configure its behavior. On first run, it will create this file and prompt you about language preferences.
 
@@ -311,7 +311,7 @@ Auto Translate supports any language code. Common examples:
 
 ```
 your-project/
-├── auto-translate.settings.json    # Configuration file
+├── auto-translatr.settings.json    # Configuration file
 ├── i18n/                          # Translation files directory
 │   ├── en.json                    # Default language
 │   ├── fr.json                    # French translations
@@ -334,9 +334,9 @@ Add to your `package.json`:
 ```json
 {
   "scripts": {
-    "translate": "auto-translate",
-    "translate:check": "auto-translate --dry-run",
-    "build": "auto-translate && next build"
+    "translate": "auto-translatr",
+    "translate:check": "auto-translatr --dry-run",
+    "build": "auto-translatr && next build"
   }
 }
 ```
@@ -378,7 +378,7 @@ Add to your `package.json`:
 For more verbose output, set the debug environment variable:
 
 ```bash
-DEBUG=auto-translate* auto-translate
+DEBUG=auto-translatr* auto-translatr
 ```
 
 ## 🤝 Contributing
@@ -403,7 +403,7 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 - **Repository**: [https://github.com/Sheyk/auto-translate](https://github.com/Sheyk/auto-translate)
 - **Issues**: [https://github.com/Sheyk/auto-translate/issues](https://github.com/Sheyk/auto-translate/issues)
-- **NPM Package**: [https://www.npmjs.com/package/@sheyk/auto-translate](https://www.npmjs.com/package/@sheyk/auto-translate)
+- **NPM Package**: [https://www.npmjs.com/package/auto-translatr](https://www.npmjs.com/package/auto-translatr)
 
 ---
 

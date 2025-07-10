@@ -54,7 +54,7 @@ afterEach(() => {
 describe('Auto-Translate Integration Test', () => {
   const testProjectDir = path.join(__dirname, 'mock-react-project')
   const i18nDir = path.join(testProjectDir, 'i18n')
-  const settingsFile = 'auto-translate.settings.json'
+  const settingsFile = 'auto-translatr.settings.json'
 
   beforeEach(() => {
     // Clean up any existing test directory
@@ -496,7 +496,7 @@ export default App`
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Successfully updated en.json'))
 
       // Verify settings-related messages were logged
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Created auto-translate.settings.json with default settings'))
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Created auto-translatr.settings.json with default settings'))
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Auto-translating from en to: fr, de'))
     } finally {
@@ -549,7 +549,7 @@ export default App`
       expect(fs.existsSync(ptFile)).toBe(true)
 
       // Verify settings loading message was logged
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Loaded settings from auto-translate.settings.json'))
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Loaded settings from auto-translatr.settings.json'))
 
       // Verify the custom languages were used
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Auto-translating from es to: pt'))

@@ -1,5 +1,5 @@
 {
-  "name": "@sheyk/auto-translate",
+  "name": "auto-translatr",
   "version": "1.0.0",
   "description": "An automatic translation library",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
     }
   },
   "bin": {
-    "auto-translate": "dist/cli.js"
+    "auto-translatr": "dist/cli.js"
   },
   "scripts": {
     "build": "npm run build:cjs && npm run build:esm",
@@ -30,6 +30,7 @@
   "keywords": [
     "translation",
     "auto-translate",
+    "auto-translatr",
     "i18n",
     "localization"
   ],
