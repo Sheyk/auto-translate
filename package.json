@@ -1,5 +1,5 @@
 {
-  "name": "auto-translate",
+  "name": "@auto-translate/js",
   "version": "1.0.0",
   "description": "An automatic translation library",
   "main": "dist/index.js",
