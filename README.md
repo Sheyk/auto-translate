@@ -103,6 +103,145 @@ Uses OpenAI to translate missing keys:
 }
 ```
 
+## 📖 Integration with i18n Libraries
+
+Auto Translate works seamlessly with popular i18n libraries. The key is configuring the `output` directory in your `auto-translate.settings.json` to match where your i18n library expects translation files.
+
+### 🔵 Nuxt.js + @nuxtjs/i18n (Complete Example)
+
+#### 1. Install @nuxtjs/i18n
+
+```bash
+npm install @nuxtjs/i18n@8
+```
+
+#### 2. Configure Auto Translate Settings
+
+Create `auto-translate.settings.json`:
+
+```json
+{
+  "default": "en",
+  "supported": ["en", "fr", "ar", "es", "de", "it", "pt", "ru", "zh", "ja"],
+  "output": "i18n",
+  "include": [".vue", ".js", ".ts"],
+  "ignore": ["node_modules", ".nuxt", "dist", ".output"],
+  "openai": {
+    "model": "gpt-4o-mini",
+    "apiKey": ""
+  }
+}
+```
+
+#### 3. Configure Nuxt
+
+```javascript
+// nuxt.config.js
+export default defineNuxtConfig({
+  modules: ['@nuxtjs/i18n'],
+
+  i18n: {
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'fr', name: 'Français', file: 'fr.json' },
+      { code: 'ar', name: 'العربية', file: 'ar.json' },
+      { code: 'es', name: 'Español', file: 'es.json' },
+      { code: 'de', name: 'Deutsch', file: 'de.json' },
+      { code: 'it', name: 'Italiano', file: 'it.json' },
+      { code: 'pt', name: 'Português', file: 'pt.json' },
+      { code: 'ru', name: 'Русский', file: 'ru.json' },
+      { code: 'zh', name: '中文', file: 'zh.json' },
+      { code: 'ja', name: '日本語', file: 'ja.json' }
+    ],
+    defaultLocale: 'en',
+    lazy: true,
+    langDir: 'i18n/', // This matches auto-translate output directory
+    strategy: 'prefix_except_default',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root'
+    }
+  }
+})
+```
+
+#### 4. Use in Nuxt Components
+
+```vue
+<template>
+  <div class="app-container">
+    <h1>{{ t('Hello, welcome to my website') }}</h1>
+
+    <p>{{ t('This is a test of the @sheyk/auto-translate package.') }}</p>
+    <p>{{ t('This text will be translated automatically using an LLM after using `npx auto-translate`.') }}</p>
+    <p>{{ t('Then it will be stored as i18n json files in a ./i18n folder.') }}</p>
+
+    <div>
+      <button @click="locale = 'en'">{{ t('English') }}</button>
+      <button @click="locale = 'fr'">{{ t('French') }}</button>
+      <button @click="locale = 'ar'">{{ t('Arabic') }}</button>
+      <button @click="locale = 'es'">{{ t('Spanish') }}</button>
+      <button @click="locale = 'de'">{{ t('German') }}</button>
+      <!-- Add more language buttons -->
+    </div>
+  </div>
+</template>
+
+<script setup>
+const { t, locale } = useI18n()
+</script>
+```
+
+### 🟢 Vue.js + Vue I18n
+
+Follow the [Vue I18n official documentation](https://vue-i18n.intlify.dev/) for setup, then configure auto-translate's `output` to match your locale files directory (typically `src/locales/`).
+
+### 🔴 React.js + react-i18next
+
+Follow the [react-i18next documentation](https://react.i18next.com/) for setup, then configure auto-translate's `output` to match your locale files directory (typically `src/locales/`).
+
+### ⚫ Next.js + next-i18next
+
+Follow the [next-i18next documentation](https://github.com/i18next/next-i18next) for setup, then configure auto-translate's `output` to `public/locales/` to match Next.js conventions.
+
+### 🔄 Complete Workflow
+
+1. **Setup**: Install your preferred i18n library and configure it to read from the auto-translate output directory
+
+2. **Code**: Write your application using `t('Your text here')` calls
+
+3. **Generate**: Run `npx auto-translate` to scan your code and generate translation files
+
+4. **Verify**: Check the generated translation files in your output directory
+
+5. **Deploy**: Your application now has automatic translations!
+
+### 📁 Expected File Structure
+
+After running auto-translate with any of the above setups:
+
+```
+your-project/
+├── auto-translate.settings.json
+├── [output-directory]/          # i18n/, src/locales/, or public/locales/
+│   ├── en.json                  # Source language (extracted from code)
+│   ├── fr.json                  # Auto-translated French
+│   ├── de.json                  # Auto-translated German
+│   └── ...                      # Other languages
+├── src/
+│   └── components/
+│       └── YourComponent.vue    # Contains: t('Your text')
+└── package.json
+```
+
+### 💡 Pro Tips
+
+- **Consistent Function Name**: Always use `t()` as your translation function name across your project
+- **Meaningful Keys**: Use descriptive text as keys (e.g., `t('Welcome message')` instead of `t('msg1')`)
+- **Review Translations**: Always review AI-generated translations for accuracy
+- **Incremental Updates**: Auto-translate only adds missing translations, preserving your manual edits
+
 ## ⚙️ Configuration
 
 ### Settings File: `auto-translate.settings.json`
