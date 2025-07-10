@@ -16,17 +16,17 @@
 ### Global Installation (CLI)
 
 ```bash
-npm install -g @auto-translate/js
+npm install -g @sheyk/auto-translate
 ```
 
 ### Local Installation (Project)
 
 ```bash
-npm install @auto-translate/js
+npm install @sheyk/auto-translate
 # or
-yarn add @auto-translate/js
+yarn add @sheyk/auto-translate
 # or
-pnpm add @auto-translate/js
+pnpm add @sheyk/auto-translate
 ```
 
 ## 🚀 Quick Start
@@ -264,7 +264,7 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 - **Repository**: [https://github.com/Sheyk/auto-translate](https://github.com/Sheyk/auto-translate)
 - **Issues**: [https://github.com/Sheyk/auto-translate/issues](https://github.com/Sheyk/auto-translate/issues)
-- **NPM Package**: [https://www.npmjs.com/package/@auto-translate/js](https://www.npmjs.com/package/@auto-translate/js)
+- **NPM Package**: [https://www.npmjs.com/package/@sheyk/auto-translate](https://www.npmjs.com/package/@sheyk/auto-translate)
 
 ---
 
