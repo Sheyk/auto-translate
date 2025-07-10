@@ -1,9 +1,9 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { 
-  getDefaultSettings, 
-  readSettingsFile, 
-  createDefaultSettingsFile, 
+import {
+  getDefaultSettings,
+  readSettingsFile,
+  createDefaultSettingsFile,
   loadSettings,
   initializeSettings,
   Settings
@@ -19,7 +19,7 @@ beforeEach(() => {
   console.log = jest.fn()
   console.warn = jest.fn()
   console.error = jest.fn()
-  
+
   // Clear all mocks before each test
   jest.clearAllMocks()
   jest.restoreAllMocks()
@@ -29,7 +29,7 @@ afterEach(() => {
   console.log = originalConsoleLog
   console.warn = originalConsoleWarn
   console.error = originalConsoleError
-  
+
   // Restore all mocks after each test
   jest.restoreAllMocks()
 })
@@ -50,7 +50,7 @@ describe('settingsReader', () => {
       }
     }
     fs.mkdirSync(testDir, { recursive: true })
-    
+
     // Clean environment
     delete process.env.OPENAI_API_KEY
   })
@@ -71,7 +71,7 @@ describe('settingsReader', () => {
         }
       }
     }
-    
+
     // Clean up any settings files in current directory
     try {
       const currentDirSettingsFile = path.join(process.cwd(), settingsFileName)
@@ -81,7 +81,7 @@ describe('settingsReader', () => {
     } catch (error) {
       // Ignore cleanup errors
     }
-    
+
     // Restore environment
     if (originalEnv) {
       process.env.OPENAI_API_KEY = originalEnv
@@ -93,7 +93,7 @@ describe('settingsReader', () => {
   describe('getDefaultSettings', () => {
     it('should return default settings without environment variable', () => {
       const settings = getDefaultSettings()
-      
+
       expect(settings).toEqual({
         default: 'en',
         supported: ['en', 'fr', 'de'],
@@ -109,9 +109,9 @@ describe('settingsReader', () => {
 
     it('should include environment variable for API key when available', () => {
       process.env.OPENAI_API_KEY = 'test-api-key'
-      
+
       const settings = getDefaultSettings()
-      
+
       expect(settings).toEqual({
         default: 'en',
         supported: ['en', 'fr', 'de'],
@@ -135,9 +135,9 @@ describe('settingsReader', () => {
 
     it('should return Left when settings file does not exist', () => {
       process.chdir(testDir)
-      
+
       const result = readSettingsFile()
-      
+
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
         expect(result.value.message).toBe('Settings file auto-translate.settings.json not found')
@@ -156,12 +156,12 @@ describe('settingsReader', () => {
           apiKey: 'file-api-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(validSettings, null, 2))
-      
+
       const result = readSettingsFile()
-      
+
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
         expect(result.value).toEqual(validSettings)
@@ -180,27 +180,25 @@ describe('settingsReader', () => {
           apiKey: 'test-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(settingsWithMissingDefault, null, 2))
-      
+
       const result = readSettingsFile()
-      
+
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
         expect(result.value.supported).toEqual(['ja', 'en', 'fr'])
         expect(result.value.default).toBe('ja')
       }
-      
+
       // Should log a warning
-      expect(console.warn).toHaveBeenCalledWith(
-        "⚠️  Default language 'ja' not found in supported languages. Adding it automatically."
-      )
+      expect(console.warn).toHaveBeenCalledWith("⚠️  Default language 'ja' not found in supported languages. Adding it automatically.")
     })
 
     it('should merge environment API key when file has empty API key', () => {
       process.env.OPENAI_API_KEY = 'env-api-key'
-      
+
       const settingsWithoutApiKey: Settings = {
         default: 'fr',
         supported: ['fr', 'en'],
@@ -212,12 +210,12 @@ describe('settingsReader', () => {
           apiKey: ''
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(settingsWithoutApiKey, null, 2))
-      
+
       const result = readSettingsFile()
-      
+
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
         expect(result.value.openai.apiKey).toBe('env-api-key')
@@ -226,7 +224,7 @@ describe('settingsReader', () => {
 
     it('should prefer file API key over environment when file has non-empty API key', () => {
       process.env.OPENAI_API_KEY = 'env-api-key'
-      
+
       const settingsWithApiKey: Settings = {
         default: 'de',
         supported: ['de', 'en'],
@@ -238,12 +236,12 @@ describe('settingsReader', () => {
           apiKey: 'file-api-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(settingsWithApiKey, null, 2))
-      
+
       const result = readSettingsFile()
-      
+
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
         expect(result.value.openai.apiKey).toBe('file-api-key')
@@ -253,9 +251,9 @@ describe('settingsReader', () => {
     it('should return Left when settings file has invalid JSON', () => {
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, '{ invalid json }')
-      
+
       const result = readSettingsFile()
-      
+
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
         expect(result.value).toBeInstanceOf(Error)
@@ -270,12 +268,12 @@ describe('settingsReader', () => {
           apiKey: 'test-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(settingsWithoutDefault, null, 2))
-      
+
       const result = readSettingsFile()
-      
+
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
         expect(result.value.message).toBe('Settings file is missing required field: default')
@@ -290,12 +288,12 @@ describe('settingsReader', () => {
           apiKey: 'test-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(settingsWithoutSupported, null, 2))
-      
+
       const result = readSettingsFile()
-      
+
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
         expect(result.value.message).toBe('Settings file is missing required field: supported (must be a non-empty array)')
@@ -311,12 +309,12 @@ describe('settingsReader', () => {
           apiKey: 'test-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(settingsWithEmptySupported, null, 2))
-      
+
       const result = readSettingsFile()
-      
+
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
         expect(result.value.message).toBe('Settings file is missing required field: supported (must be a non-empty array)')
@@ -331,15 +329,17 @@ describe('settingsReader', () => {
           apiKey: 'test-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(settingsWithoutModel, null, 2))
-      
+
       const result = readSettingsFile()
-      
+
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
-        expect(result.value.message).toBe('Settings file is missing required field: openai.model. Please set your OpenAI model in the file or as OPENAI_MODEL environment variable.')
+        expect(result.value.message).toBe(
+          'Settings file is missing required field: openai.model. Please set your OpenAI model in the file or as OPENAI_MODEL environment variable.'
+        )
       }
     })
   })
@@ -351,14 +351,15 @@ describe('settingsReader', () => {
       process.chdir(originalCwd)
     })
 
-    it('should create settings file with default values', () => {
+    it('should create settings file with default values when environment API key is provided', () => {
+      process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
-      
+
       const result = createDefaultSettingsFile()
-      
+
       expect(isRight(result)).toBe(true)
       expect(fs.existsSync(settingsFilePath)).toBe(true)
-      
+
       const fileContent = JSON.parse(fs.readFileSync(settingsFilePath, 'utf-8'))
       expect(fileContent).toEqual({
         default: 'en',
@@ -368,45 +369,56 @@ describe('settingsReader', () => {
         ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
         openai: {
           model: 'gpt-4o-mini',
-          apiKey: ''  // Should be empty in file for security
+          apiKey: '' // Should be empty in file for security
         }
       })
-      
+
       if (isRight(result)) {
-        // But should return settings with environment API key if available
-        expect(result.value.openai.apiKey).toBe('')
+        // But should return settings with environment API key
+        expect(result.value.openai.apiKey).toBe('test-env-key')
+      }
+    })
+
+    it('should return error when environment API key is not provided', () => {
+      // Ensure no API key is set
+      delete process.env.OPENAI_API_KEY
+      process.chdir(testDir)
+
+      const result = createDefaultSettingsFile()
+
+      expect(isLeft(result)).toBe(true)
+      if (isLeft(result)) {
+        expect(result.value.message).toBe(
+          'Settings file is missing required field: openai.apiKey. Please set your OpenAI API key in the file or as OPENAI_API_KEY environment variable.'
+        )
       }
     })
 
     it('should create settings file and return settings with environment API key', () => {
       process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
-      
+
       const result = createDefaultSettingsFile()
-      
+
       expect(isRight(result)).toBe(true)
-      
+
       // File should still have empty API key for security
       const fileContent = JSON.parse(fs.readFileSync(settingsFilePath, 'utf-8'))
       expect(fileContent.openai.apiKey).toBe('')
-      
+
       // But returned settings should have environment API key
       if (isRight(result)) {
         expect(result.value.openai.apiKey).toBe('test-env-key')
       }
     })
 
-    it('should log creation messages', () => {
+    it('should log creation messages when environment API key is provided', () => {
+      process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
-      
+
       createDefaultSettingsFile()
-      
-      expect(console.log).toHaveBeenCalledWith(
-        '📄 Created auto-translate.settings.json with default settings'
-      )
-      expect(console.log).toHaveBeenCalledWith(
-        '💡 Please set your OpenAI API key in the file or as OPENAI_API_KEY environment variable'
-      )
+
+      expect(console.log).toHaveBeenCalledWith('📄 Created auto-translate.settings.json with default settings')
     })
   })
 
@@ -417,14 +429,15 @@ describe('settingsReader', () => {
       process.chdir(originalCwd)
     })
 
-    it('should create default settings when file does not exist', () => {
+    it('should create default settings when file does not exist and environment API key is provided', () => {
+      process.env.OPENAI_API_KEY = 'test-env-key'
       process.chdir(testDir)
-      
+
       const result = initializeSettings()
-      
+
       expect(isRight(result)).toBe(true)
       expect(fs.existsSync(settingsFilePath)).toBe(true)
-      
+
       if (isRight(result)) {
         expect(result.value).toEqual({
           default: 'en',
@@ -434,14 +447,29 @@ describe('settingsReader', () => {
           ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
           openai: {
             model: 'gpt-4o-mini',
-            apiKey: ''
+            apiKey: 'test-env-key'
           }
         })
       }
-      
-      expect(console.log).toHaveBeenCalledWith(
-        '⚙️ Settings file auto-translate.settings.json not found, creating default settings...'
-      )
+
+      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translate.settings.json not found, creating default settings...')
+    })
+
+    it('should return error when file does not exist and environment API key is not provided', () => {
+      // Ensure no API key is set
+      delete process.env.OPENAI_API_KEY
+      process.chdir(testDir)
+
+      const result = initializeSettings()
+
+      expect(isLeft(result)).toBe(true)
+      if (isLeft(result)) {
+        expect(result.value.message).toBe(
+          'Settings file is missing required field: openai.apiKey. Please set your OpenAI API key in the file or as OPENAI_API_KEY environment variable.'
+        )
+      }
+
+      expect(console.log).toHaveBeenCalledWith('⚙️ Settings file auto-translate.settings.json not found, creating default settings...')
     })
 
     it('should load existing settings when file exists', () => {
@@ -456,28 +484,46 @@ describe('settingsReader', () => {
           apiKey: 'existing-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(existingSettings, null, 2))
-      
+
       const result = initializeSettings()
-      
+
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
         expect(result.value).toEqual(existingSettings)
       }
-      
-      expect(console.log).toHaveBeenCalledWith(
-        '⚙️ Loaded settings from auto-translate.settings.json'
-      )
+
+      expect(console.log).toHaveBeenCalledWith('⚙️ Loaded settings from auto-translate.settings.json')
     })
 
-    it('should create default settings when file has invalid JSON', () => {
+    it('should return error when file has invalid JSON and environment API key is not provided', () => {
+      // Ensure no API key is set
+      delete process.env.OPENAI_API_KEY
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, '{ invalid json }')
-      
+
       const result = initializeSettings()
-      
+
+      expect(isLeft(result)).toBe(true)
+      if (isLeft(result)) {
+        expect(result.value.message).toBe(
+          'Settings file is missing required field: openai.apiKey. Please set your OpenAI API key in the file or as OPENAI_API_KEY environment variable.'
+        )
+      }
+
+      // Should have logged the error and attempted to create defaults
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('creating default settings...'))
+    })
+
+    it('should create default settings when file has invalid JSON and environment API key is provided', () => {
+      process.env.OPENAI_API_KEY = 'test-env-key'
+      process.chdir(testDir)
+      fs.writeFileSync(settingsFilePath, '{ invalid json }')
+
+      const result = initializeSettings()
+
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
         expect(result.value).toEqual({
@@ -488,15 +534,13 @@ describe('settingsReader', () => {
           ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
           openai: {
             model: 'gpt-4o-mini',
-            apiKey: ''
+            apiKey: 'test-env-key'
           }
         })
       }
-      
+
       // Should have logged the error and created defaults
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('creating default settings...')
-      )
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('creating default settings...'))
     })
   })
 
@@ -519,30 +563,28 @@ describe('settingsReader', () => {
           apiKey: 'existing-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(existingSettings, null, 2))
-      
+
       const result = loadSettings()
-      
+
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
         expect(result.value).toEqual(existingSettings)
       }
-      
-      expect(console.log).toHaveBeenCalledWith(
-        '⚙️ Loaded settings from auto-translate.settings.json'
-      )
+
+      expect(console.log).toHaveBeenCalledWith('⚙️ Loaded settings from auto-translate.settings.json')
     })
 
     it('should return error when file does not exist', () => {
       process.chdir(testDir)
-      
+
       const result = loadSettings()
-      
+
       expect(isLeft(result)).toBe(true)
       expect(fs.existsSync(settingsFilePath)).toBe(false)
-      
+
       if (isLeft(result)) {
         expect(result.value.message).toBe('Settings file auto-translate.settings.json not found')
       }
@@ -557,21 +599,19 @@ describe('settingsReader', () => {
           apiKey: 'test-key'
         }
       }
-      
+
       process.chdir(testDir)
       fs.writeFileSync(settingsFilePath, JSON.stringify(settingsWithMissingDefault, null, 2))
-      
+
       const result = loadSettings()
-      
+
       expect(isRight(result)).toBe(true)
       if (isRight(result)) {
         expect(result.value.supported).toEqual(['pt', 'en', 'fr'])
         expect(result.value.default).toBe('pt')
       }
-      
-      expect(console.warn).toHaveBeenCalledWith(
-        "⚠️  Default language 'pt' not found in supported languages. Adding it automatically."
-      )
+
+      expect(console.warn).toHaveBeenCalledWith("⚠️  Default language 'pt' not found in supported languages. Adding it automatically.")
     })
   })
 
@@ -588,15 +628,15 @@ describe('settingsReader', () => {
           apiKey: 'test-key'
         }
       }
-      
+
       const originalCwd = process.cwd()
       process.chdir(testDir)
-      
+
       try {
         fs.writeFileSync(settingsFilePath, JSON.stringify(validSettings, null, 2))
-        
+
         const result = readSettingsFile()
-        
+
         expect(isRight(result)).toBe(true)
         if (isRight(result)) {
           expect(result.value.default).toBe('pt')
@@ -611,4 +651,4 @@ describe('settingsReader', () => {
       }
     })
   })
-}) 
+})
