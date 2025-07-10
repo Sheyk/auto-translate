@@ -1,4 +1,4 @@
-# Auto Translate
+# Auto Translatr
 
 🌍 **Automatic internationalization (i18n) tool** that scans your codebase for translation calls and uses OpenAI to automatically translate missing translations into multiple languages.
 
