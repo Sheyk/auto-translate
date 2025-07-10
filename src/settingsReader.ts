@@ -129,13 +129,25 @@ export const createDefaultSettingsFile = (): Either<Error, Settings> => {
   }
 }
 
-// Helper function to load or create settings
-export const loadSettings = (): Either<Error, Settings> => {
+// Helper function to initialize settings (creates defaults if none exist)
+export const initializeSettings = (): Either<Error, Settings> => {
   const readResult = readSettingsFile()
   
   if (readResult.type === 'left') {
     console.log(`⚙️ ${readResult.value.message}, creating default settings...`)
     return createDefaultSettingsFile()
+  }
+  
+  console.log(`⚙️ Loaded settings from ${SETTINGS_FILE}`)
+  return readResult
+}
+
+// Helper function to load or create settings
+export const loadSettings = (): Either<Error, Settings> => {
+  const readResult = readSettingsFile()
+  
+  if (readResult.type === 'left') {
+    return readResult // Return the error immediately, don't create defaults
   }
   
   console.log(`⚙️ Loaded settings from ${SETTINGS_FILE}`)

@@ -5,7 +5,8 @@ import {
   readSettingsFile, 
   createDefaultSettingsFile, 
   loadSettings,
-  Settings 
+  initializeSettings,
+  Settings
 } from '../settingsReader'
 import { isLeft, isRight } from '../utils'
 
@@ -338,7 +339,7 @@ describe('settingsReader', () => {
       
       expect(isLeft(result)).toBe(true)
       if (isLeft(result)) {
-        expect(result.value.message).toBe('Settings file is missing required field: openai.model')
+        expect(result.value.message).toBe('Settings file is missing required field: openai.model. Please set your OpenAI model in the file or as OPENAI_MODEL environment variable.')
       }
     })
   })
@@ -409,6 +410,96 @@ describe('settingsReader', () => {
     })
   })
 
+  describe('initializeSettings', () => {
+    const originalCwd = process.cwd()
+
+    afterEach(() => {
+      process.chdir(originalCwd)
+    })
+
+    it('should create default settings when file does not exist', () => {
+      process.chdir(testDir)
+      
+      const result = initializeSettings()
+      
+      expect(isRight(result)).toBe(true)
+      expect(fs.existsSync(settingsFilePath)).toBe(true)
+      
+      if (isRight(result)) {
+        expect(result.value).toEqual({
+          default: 'en',
+          supported: ['en', 'fr', 'de'],
+          output: 'i18n',
+          include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+          ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
+          openai: {
+            model: 'gpt-4o-mini',
+            apiKey: ''
+          }
+        })
+      }
+      
+      expect(console.log).toHaveBeenCalledWith(
+        '⚙️ Settings file auto-translate.settings.json not found, creating default settings...'
+      )
+    })
+
+    it('should load existing settings when file exists', () => {
+      const existingSettings: Settings = {
+        default: 'ja',
+        supported: ['ja', 'en', 'ko'],
+        output: 'i18n',
+        include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+        ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
+        openai: {
+          model: 'gpt-4-turbo',
+          apiKey: 'existing-key'
+        }
+      }
+      
+      process.chdir(testDir)
+      fs.writeFileSync(settingsFilePath, JSON.stringify(existingSettings, null, 2))
+      
+      const result = initializeSettings()
+      
+      expect(isRight(result)).toBe(true)
+      if (isRight(result)) {
+        expect(result.value).toEqual(existingSettings)
+      }
+      
+      expect(console.log).toHaveBeenCalledWith(
+        '⚙️ Loaded settings from auto-translate.settings.json'
+      )
+    })
+
+    it('should create default settings when file has invalid JSON', () => {
+      process.chdir(testDir)
+      fs.writeFileSync(settingsFilePath, '{ invalid json }')
+      
+      const result = initializeSettings()
+      
+      expect(isRight(result)).toBe(true)
+      if (isRight(result)) {
+        expect(result.value).toEqual({
+          default: 'en',
+          supported: ['en', 'fr', 'de'],
+          output: 'i18n',
+          include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
+          ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
+          openai: {
+            model: 'gpt-4o-mini',
+            apiKey: ''
+          }
+        })
+      }
+      
+      // Should have logged the error and created defaults
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('creating default settings...')
+      )
+    })
+  })
+
   describe('loadSettings', () => {
     const originalCwd = process.cwd()
 
@@ -444,31 +535,17 @@ describe('settingsReader', () => {
       )
     })
 
-    it('should create default settings when file does not exist', () => {
+    it('should return error when file does not exist', () => {
       process.chdir(testDir)
       
       const result = loadSettings()
       
-      expect(isRight(result)).toBe(true)
-      expect(fs.existsSync(settingsFilePath)).toBe(true)
+      expect(isLeft(result)).toBe(true)
+      expect(fs.existsSync(settingsFilePath)).toBe(false)
       
-      if (isRight(result)) {
-        expect(result.value).toEqual({
-          default: 'en',
-          supported: ['en', 'fr', 'de'],
-          output: 'i18n',
-          include: ['.js', '.jsx', '.ts', '.tsx', '.vue', '.svelte'],
-          ignore: ['node_modules', '.git', 'dist', 'build', '.next', 'coverage'],
-          openai: {
-            model: 'gpt-4o-mini',
-            apiKey: ''
-          }
-        })
+      if (isLeft(result)) {
+        expect(result.value.message).toBe('Settings file auto-translate.settings.json not found')
       }
-      
-      expect(console.log).toHaveBeenCalledWith(
-        '⚙️ Settings file auto-translate.settings.json not found, creating default settings...'
-      )
     })
 
     it('should auto-fix settings when default language is missing from supported array', () => {

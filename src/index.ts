@@ -3,7 +3,7 @@ import { Translations, Language, readAllTranslations, writeLanguageFiles, writeL
 import { addMissingTranslations } from './translationsParser'
 import { prompt } from './openaiClient'
 import { read } from './codebaseReader'
-import { Settings, loadSettings, TranslationReaderConfig, CodebaseReaderConfig } from './settingsReader'
+import { Settings, initializeSettings, TranslationReaderConfig, CodebaseReaderConfig } from './settingsReader'
 
 export const parseCodeBaseTranslations = async (settings: Settings) => {
   const codebaseConfig: CodebaseReaderConfig = {
@@ -47,7 +47,7 @@ const translate = async (settings: Settings) => {
 }
 
 export const run = async () => {
-  const settingsResult = loadSettings()
+  const settingsResult = initializeSettings()
   
   if (isLeft(settingsResult)) {
     console.error('❌ Failed to load settings:', settingsResult.value.message)
